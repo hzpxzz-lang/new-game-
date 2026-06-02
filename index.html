@@ -1,0 +1,862 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>验证码冲刺</title>
+  <style>
+    :root {
+      --bg: #111418;
+      --panel: #191f26;
+      --panel-2: #232b34;
+      --line: #3b4652;
+      --text: #f4f8fb;
+      --muted: #9ca9b5;
+      --yellow: #f7c95c;
+      --teal: #45d3c8;
+      --coral: #ff7b70;
+      --green: #88d36f;
+      --shadow: 0 18px 46px rgba(0, 0, 0, 0.34);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; margin: 0; }
+
+    body {
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(69, 211, 200, 0.14), transparent 28%),
+        linear-gradient(180deg, #111418 0%, #17212a 54%, #101318 100%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button, input, select { font: inherit; }
+
+    .app {
+      width: min(1120px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0 38px;
+    }
+
+    .top {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4.8vw, 48px);
+      line-height: 1;
+      font-weight: 850;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .scorebar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .metric {
+      min-width: 96px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(25, 31, 38, 0.84);
+      padding: 10px 12px;
+      box-shadow: 0 8px 22px rgba(0,0,0,0.16);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 22px;
+      line-height: 1.08;
+      font-weight: 850;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 1fr) 310px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .arena, .side {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(25, 31, 38, 0.9);
+      box-shadow: var(--shadow);
+    }
+
+    .arena {
+      min-height: 590px;
+      padding: clamp(14px, 2.2vw, 22px);
+    }
+
+    .round-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 0 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: #141a20;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .pill.accent { color: #fff2c6; border-color: rgba(247, 201, 92, 0.64); }
+
+    .captcha-card {
+      display: grid;
+      gap: 16px;
+      min-height: 430px;
+      align-content: start;
+    }
+
+    .visual-frame {
+      width: 100%;
+      min-height: 260px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #465360;
+      border-radius: 8px;
+      background: #0d1116;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .captcha-canvas {
+      width: min(100%, 650px);
+      height: auto;
+      display: block;
+    }
+
+    .math-box {
+      width: min(100%, 620px);
+      aspect-ratio: 16 / 7;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(69, 211, 200, 0.18), transparent 42%),
+        repeating-linear-gradient(45deg, #11171d 0, #11171d 18px, #151d25 18px, #151d25 36px);
+      border: 1px solid #465360;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .math-box::before,
+    .math-box::after {
+      content: "";
+      position: absolute;
+      width: 160%;
+      height: 3px;
+      background: rgba(255, 123, 112, 0.72);
+      transform: rotate(-8deg);
+    }
+
+    .math-box::before { top: 32%; left: -22%; }
+    .math-box::after { bottom: 29%; left: -30%; background: rgba(247, 201, 92, 0.62); transform: rotate(11deg); }
+
+    .math-expression {
+      position: relative;
+      z-index: 1;
+      font-size: clamp(46px, 9vw, 78px);
+      line-height: 1;
+      font-weight: 900;
+      color: #f6f8fb;
+      text-shadow: 0 7px 0 rgba(0, 0, 0, 0.26), 0 0 28px rgba(69, 211, 200, 0.25);
+    }
+
+    .image-grid {
+      width: min(100%, 520px);
+      display: grid;
+      grid-template-columns: repeat(3, minmax(72px, 1fr));
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .image-tile {
+      min-height: 112px;
+      border: 1px solid #465360;
+      border-radius: 8px;
+      background: #141a20;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+    }
+
+    .image-tile:hover,
+    .image-tile:focus-visible {
+      outline: none;
+      border-color: var(--yellow);
+      background: #202832;
+      transform: translateY(-2px);
+    }
+
+    .image-tile.selected {
+      border-color: var(--teal);
+      box-shadow: inset 0 0 0 2px rgba(69, 211, 200, 0.8);
+    }
+
+    .icon-svg {
+      width: 70px;
+      height: 70px;
+      display: block;
+    }
+
+    .prompt-row {
+      display: grid;
+      gap: 10px;
+    }
+
+    .target-line {
+      color: var(--muted);
+      font-size: 14px;
+      min-height: 20px;
+    }
+
+    .target-line strong { color: var(--yellow); font-weight: 850; }
+
+    .answer-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+    }
+
+    input {
+      width: 100%;
+      min-height: 50px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #10151b;
+      color: var(--text);
+      padding: 0 14px;
+      font-size: 22px;
+      font-weight: 750;
+      letter-spacing: 0;
+    }
+
+    input:focus-visible {
+      outline: none;
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(69, 211, 200, 0.16);
+    }
+
+    .btn {
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 0 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      outline: none;
+      transform: translateY(-1px);
+      border-color: var(--yellow);
+      background: #2d3540;
+    }
+
+    .btn.primary {
+      border-color: rgba(247, 201, 92, 0.7);
+      background: #3a3120;
+      color: #fff1c4;
+    }
+
+    .btn.teal {
+      border-color: rgba(69, 211, 200, 0.65);
+      color: #c8fff8;
+    }
+
+    .feedback {
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: rgba(13, 17, 22, 0.58);
+      color: var(--muted);
+      padding: 10px 12px;
+      line-height: 1.35;
+      font-size: 14px;
+    }
+
+    .feedback.good { color: #dffbd8; border-color: rgba(136, 211, 111, 0.66); }
+    .feedback.bad { color: #ffd7d3; border-color: rgba(255, 123, 112, 0.66); }
+
+    .side {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .side-block {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(13, 17, 22, 0.45);
+      padding: 12px;
+    }
+
+    .side-block h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .type-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .type-item {
+      display: grid;
+      grid-template-columns: 10px minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--teal);
+    }
+
+    .type-item:nth-child(2) .dot { background: var(--yellow); }
+    .type-item:nth-child(3) .dot { background: var(--coral); }
+
+    .log {
+      display: grid;
+      gap: 7px;
+      min-height: 168px;
+      align-content: start;
+    }
+
+    .log-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      border-bottom: 1px solid rgba(59, 70, 82, 0.55);
+      padding-bottom: 7px;
+    }
+
+    .log-row strong { color: var(--text); }
+
+    .result-layer {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 22px;
+      background: rgba(10, 13, 16, 0.74);
+      backdrop-filter: blur(8px);
+      z-index: 5;
+    }
+
+    .result-layer.show { display: grid; }
+
+    .result-card {
+      width: min(460px, 100%);
+      border: 1px solid rgba(247, 201, 92, 0.66);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .result-card h2 {
+      margin: 0 0 10px;
+      font-size: 32px;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .result-stat {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #11171d;
+    }
+
+    .result-stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .result-stat strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    @media (max-width: 900px) {
+      .top, .layout { grid-template-columns: 1fr; }
+      .scorebar { justify-content: stretch; }
+      .metric { flex: 1 1 120px; }
+      .side { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 620px) {
+      .app { width: min(100vw - 18px, 1120px); padding-top: 16px; }
+      .arena { min-height: 540px; }
+      .round-head, .answer-row { grid-template-columns: 1fr; }
+      .round-head { display: grid; }
+      .side { grid-template-columns: 1fr; }
+      .visual-frame { min-height: 220px; }
+      .image-grid { gap: 8px; padding: 8px; }
+      .image-tile { min-height: 86px; }
+      .icon-svg { width: 58px; height: 58px; }
+      input { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <div>
+        <h1>验证码冲刺</h1>
+        <p class="subtitle">12 回合，越快越准分数越高。</p>
+      </div>
+      <div class="scorebar" aria-live="polite">
+        <div class="metric"><span>回合</span><strong id="roundMetric">1/12</strong></div>
+        <div class="metric"><span>正确</span><strong id="correctMetric">0</strong></div>
+        <div class="metric"><span>计时</span><strong id="timeMetric">00.0</strong></div>
+        <div class="metric"><span>分数</span><strong id="scoreMetric">0</strong></div>
+      </div>
+    </header>
+
+    <section class="layout">
+      <section class="arena">
+        <div class="round-head">
+          <span id="typePill" class="pill accent">字符验证码</span>
+          <span id="speedPill" class="pill">平均 0.0 秒</span>
+        </div>
+
+        <div class="captcha-card">
+          <div id="visualFrame" class="visual-frame"></div>
+          <div class="prompt-row">
+            <div id="targetLine" class="target-line">输入画面中的字符</div>
+            <div id="answerRow" class="answer-row">
+              <input id="answerInput" autocomplete="off" spellcheck="false" inputmode="text" aria-label="验证码输入框">
+              <button id="submitBtn" class="btn primary" type="button">提交</button>
+            </div>
+            <div id="feedback" class="feedback">按开始进入第一回合。</div>
+          </div>
+          <button id="startBtn" class="btn teal" type="button">开始</button>
+        </div>
+      </section>
+
+      <aside class="side">
+        <div class="side-block">
+          <h2>验证码类型</h2>
+          <div class="type-list">
+            <div class="type-item"><span class="dot"></span><span>扭曲字符</span><strong id="textCount">0</strong></div>
+            <div class="type-item"><span class="dot"></span><span>算术题</span><strong id="mathCount">0</strong></div>
+            <div class="type-item"><span class="dot"></span><span>图形选择</span><strong id="imageCount">0</strong></div>
+          </div>
+        </div>
+        <div class="side-block">
+          <h2>最近记录</h2>
+          <div id="log" class="log"></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div id="resultLayer" class="result-layer" role="dialog" aria-modal="true">
+    <div class="result-card">
+      <h2>成绩</h2>
+      <div class="result-grid">
+        <div class="result-stat"><span>正确率</span><strong id="resultAccuracy">0%</strong></div>
+        <div class="result-stat"><span>平均耗时</span><strong id="resultAvg">0.0s</strong></div>
+        <div class="result-stat"><span>总分</span><strong id="resultScore">0</strong></div>
+        <div class="result-stat"><span>最快</span><strong id="resultBest">0.0s</strong></div>
+      </div>
+      <button id="restartBtn" class="btn primary" type="button">再玩一次</button>
+    </div>
+  </div>
+
+  <script>
+    const TOTAL_ROUNDS = 12;
+    const TYPES = ['text', 'math', 'image'];
+    const LABELS = { text: '字符验证码', math: '算术题', image: '图形选择' };
+    const ICONS = [
+      { key: 'star', label: '星星', color: '#f7c95c' },
+      { key: 'circle', label: '圆形', color: '#45d3c8' },
+      { key: 'square', label: '方块', color: '#ff7b70' },
+      { key: 'triangle', label: '三角', color: '#88d36f' },
+      { key: 'diamond', label: '菱形', color: '#b9a7ff' }
+    ];
+
+    const els = {
+      roundMetric: document.getElementById('roundMetric'),
+      correctMetric: document.getElementById('correctMetric'),
+      timeMetric: document.getElementById('timeMetric'),
+      scoreMetric: document.getElementById('scoreMetric'),
+      typePill: document.getElementById('typePill'),
+      speedPill: document.getElementById('speedPill'),
+      visualFrame: document.getElementById('visualFrame'),
+      targetLine: document.getElementById('targetLine'),
+      answerRow: document.getElementById('answerRow'),
+      answerInput: document.getElementById('answerInput'),
+      submitBtn: document.getElementById('submitBtn'),
+      feedback: document.getElementById('feedback'),
+      startBtn: document.getElementById('startBtn'),
+      log: document.getElementById('log'),
+      textCount: document.getElementById('textCount'),
+      mathCount: document.getElementById('mathCount'),
+      imageCount: document.getElementById('imageCount'),
+      resultLayer: document.getElementById('resultLayer'),
+      resultAccuracy: document.getElementById('resultAccuracy'),
+      resultAvg: document.getElementById('resultAvg'),
+      resultScore: document.getElementById('resultScore'),
+      resultBest: document.getElementById('resultBest'),
+      restartBtn: document.getElementById('restartBtn')
+    };
+
+    const state = {
+      active: false,
+      round: 0,
+      correct: 0,
+      score: 0,
+      startTime: 0,
+      elapsed: 0,
+      ticker: null,
+      current: null,
+      records: [],
+      counts: { text: 0, math: 0, image: 0 },
+      selectedImage: null
+    };
+
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function pick(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function shuffle(arr) {
+      const copy = arr.slice();
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function startGame() {
+      state.active = true;
+      state.round = 0;
+      state.correct = 0;
+      state.score = 0;
+      state.elapsed = 0;
+      state.records = [];
+      state.counts = { text: 0, math: 0, image: 0 };
+      els.resultLayer.classList.remove('show');
+      els.startBtn.style.display = 'none';
+      els.log.innerHTML = '';
+      setFeedback('第一题。', '');
+      nextRound();
+    }
+
+    function nextRound() {
+      if (state.round >= TOTAL_ROUNDS) {
+        finishGame();
+        return;
+      }
+      state.round += 1;
+      const type = TYPES[(state.round - 1) % TYPES.length];
+      state.current = makeChallenge(type);
+      state.counts[type] += 1;
+      state.selectedImage = null;
+      state.startTime = performance.now();
+      startTicker();
+      renderChallenge();
+      updateMetrics();
+      if (type !== 'image') {
+        window.setTimeout(() => els.answerInput.focus(), 0);
+      }
+    }
+
+    function makeChallenge(type) {
+      if (type === 'text') {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let value = '';
+        for (let i = 0; i < 5; i++) value += pick(chars);
+        return { type, value, prompt: '输入画面中的字符' };
+      }
+      if (type === 'math') {
+        const a = randInt(8, 46);
+        const b = randInt(3, 29);
+        const op = pick(['+', '-', '×']);
+        const value = op === '+' ? a + b : op === '-' ? a - b : a * b;
+        return { type, value: String(value), expression: `${a} ${op} ${b}`, prompt: '输入计算结果' };
+      }
+      const target = pick(ICONS);
+      const pool = shuffle(ICONS).slice(0, 4);
+      if (!pool.some(item => item.key === target.key)) pool[randInt(0, pool.length - 1)] = target;
+      const items = shuffle([...pool, ...shuffle(ICONS).slice(0, 5)]).slice(0, 9);
+      const ensured = items.some(item => item.key === target.key) ? items : [target, ...items.slice(1)];
+      return { type, value: target.key, target, items: ensured, prompt: `选择 ${target.label}` };
+    }
+
+    function renderChallenge() {
+      const c = state.current;
+      els.typePill.textContent = LABELS[c.type];
+      els.targetLine.innerHTML = c.type === 'image' ? `点击 <strong>${c.target.label}</strong>` : c.prompt;
+      els.visualFrame.innerHTML = '';
+      els.answerInput.value = '';
+      els.answerInput.disabled = c.type === 'image';
+      els.submitBtn.disabled = c.type === 'image';
+      els.answerRow.style.display = c.type === 'image' ? 'none' : 'grid';
+      setFeedback(c.type === 'image' ? '点选目标图形。' : '输入后提交。', '');
+
+      if (c.type === 'text') renderTextCaptcha(c.value);
+      if (c.type === 'math') renderMathCaptcha(c.expression);
+      if (c.type === 'image') renderImageCaptcha(c.items);
+    }
+
+    function renderTextCaptcha(value) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 900;
+      canvas.height = 360;
+      canvas.className = 'captcha-canvas';
+      const ctx = canvas.getContext('2d');
+
+      const bg = ctx.createLinearGradient(0, 0, 900, 360);
+      bg.addColorStop(0, '#f2f6f8');
+      bg.addColorStop(1, '#d8eef0');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, 900, 360);
+
+      for (let i = 0; i < 420; i++) {
+        ctx.fillStyle = `rgba(${randInt(30, 160)}, ${randInt(70, 190)}, ${randInt(90, 210)}, ${Math.random() * 0.32})`;
+        ctx.fillRect(randInt(0, 900), randInt(0, 360), randInt(1, 5), randInt(1, 5));
+      }
+
+      for (let i = 0; i < 12; i++) {
+        ctx.strokeStyle = `rgba(${randInt(20, 180)}, ${randInt(60, 170)}, ${randInt(80, 210)}, 0.45)`;
+        ctx.lineWidth = randInt(2, 6);
+        ctx.beginPath();
+        ctx.moveTo(randInt(-40, 120), randInt(0, 360));
+        ctx.bezierCurveTo(randInt(160, 320), randInt(0, 360), randInt(520, 700), randInt(0, 360), randInt(820, 960), randInt(0, 360));
+        ctx.stroke();
+      }
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = '900 104px Segoe UI, Arial, sans-serif';
+      const colors = ['#182a3a', '#b54f55', '#247a76', '#7255a0', '#9c6a17'];
+      [...value].forEach((ch, i) => {
+        ctx.save();
+        const x = 160 + i * 150 + randInt(-10, 10);
+        const y = 180 + randInt(-22, 22);
+        ctx.translate(x, y);
+        ctx.rotate((randInt(-22, 22) * Math.PI) / 180);
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.shadowColor = 'rgba(0,0,0,0.16)';
+        ctx.shadowBlur = 8;
+        ctx.fillText(ch, 0, 0);
+        ctx.restore();
+      });
+
+      els.visualFrame.appendChild(canvas);
+    }
+
+    function renderMathCaptcha(expression) {
+      const box = document.createElement('div');
+      box.className = 'math-box';
+      const exp = document.createElement('div');
+      exp.className = 'math-expression';
+      exp.textContent = expression;
+      box.appendChild(exp);
+      els.visualFrame.appendChild(box);
+    }
+
+    function renderImageCaptcha(items) {
+      const grid = document.createElement('div');
+      grid.className = 'image-grid';
+      items.forEach((item, index) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'image-tile';
+        btn.setAttribute('aria-label', item.label);
+        btn.innerHTML = makeIconSvg(item.key, item.color, index);
+        btn.addEventListener('click', () => {
+          state.selectedImage = item.key;
+          [...grid.children].forEach(child => child.classList.remove('selected'));
+          btn.classList.add('selected');
+          submitAnswer();
+        });
+        grid.appendChild(btn);
+      });
+      els.visualFrame.appendChild(grid);
+    }
+
+    function makeIconSvg(key, color, seed) {
+      const bg = seed % 2 ? '#18212a' : '#202832';
+      const noise = `<circle cx="${18 + seed * 3 % 44}" cy="${20 + seed * 7 % 42}" r="4" fill="rgba(255,255,255,.16)"/>`;
+      const common = `fill="${color}" stroke="rgba(255,255,255,.58)" stroke-width="3"`;
+      let shape = '';
+      if (key === 'star') shape = `<path ${common} d="M50 10 L61 36 L89 38 L68 56 L75 84 L50 69 L25 84 L32 56 L11 38 L39 36 Z"/>`;
+      if (key === 'circle') shape = `<circle ${common} cx="50" cy="50" r="31"/>`;
+      if (key === 'square') shape = `<rect ${common} x="22" y="22" width="56" height="56" rx="8"/>`;
+      if (key === 'triangle') shape = `<path ${common} d="M50 15 L86 80 H14 Z"/>`;
+      if (key === 'diamond') shape = `<path ${common} d="M50 12 L86 50 L50 88 L14 50 Z"/>`;
+      return `<svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="14" fill="${bg}"/>${noise}${shape}<path d="M12 88 C34 76 66 98 88 80" fill="none" stroke="rgba(247,201,92,.34)" stroke-width="4"/></svg>`;
+    }
+
+    function startTicker() {
+      if (state.ticker) window.clearInterval(state.ticker);
+      state.ticker = window.setInterval(() => {
+        state.elapsed = (performance.now() - state.startTime) / 1000;
+        els.timeMetric.textContent = state.elapsed.toFixed(1);
+      }, 80);
+    }
+
+    function stopTicker() {
+      if (state.ticker) window.clearInterval(state.ticker);
+      state.ticker = null;
+      state.elapsed = (performance.now() - state.startTime) / 1000;
+      els.timeMetric.textContent = state.elapsed.toFixed(1);
+    }
+
+    function submitAnswer() {
+      if (!state.active || !state.current) return;
+      const c = state.current;
+      const raw = c.type === 'image' ? state.selectedImage : els.answerInput.value.trim();
+      if (!raw) return;
+
+      stopTicker();
+      const normalized = String(raw).toUpperCase().replace(/\s+/g, '');
+      const expected = String(c.value).toUpperCase();
+      const ok = normalized === expected;
+      const time = Math.max(0.1, state.elapsed);
+      const gained = ok ? Math.max(20, Math.round(300 - time * 28)) : 0;
+
+      if (ok) {
+        state.correct += 1;
+        state.score += gained;
+        setFeedback(`正确 +${gained}`, 'good');
+      } else {
+        setFeedback(`错误，答案是 ${displayAnswer(c)}`, 'bad');
+      }
+
+      state.records.unshift({ type: c.type, ok, time, answer: displayAnswer(c) });
+      state.records = state.records.slice(0, 5);
+      updateMetrics();
+      renderLog();
+      window.setTimeout(nextRound, ok ? 420 : 760);
+    }
+
+    function displayAnswer(c) {
+      if (c.type === 'image') return c.target.label;
+      return c.value;
+    }
+
+    function setFeedback(text, tone) {
+      els.feedback.textContent = text;
+      els.feedback.className = `feedback ${tone}`.trim();
+    }
+
+    function updateMetrics() {
+      els.roundMetric.textContent = `${Math.min(state.round, TOTAL_ROUNDS)}/${TOTAL_ROUNDS}`;
+      els.correctMetric.textContent = String(state.correct);
+      els.scoreMetric.textContent = String(state.score);
+      els.textCount.textContent = String(state.counts.text);
+      els.mathCount.textContent = String(state.counts.math);
+      els.imageCount.textContent = String(state.counts.image);
+      const avg = state.records.length ? state.records.reduce((sum, r) => sum + r.time, 0) / state.records.length : 0;
+      els.speedPill.textContent = `平均 ${avg.toFixed(1)} 秒`;
+    }
+
+    function renderLog() {
+      els.log.innerHTML = '';
+      state.records.forEach((record) => {
+        const row = document.createElement('div');
+        row.className = 'log-row';
+        row.innerHTML = `<span>${LABELS[record.type]} · ${record.ok ? '正确' : '错误'}</span><strong>${record.time.toFixed(1)}s</strong>`;
+        els.log.appendChild(row);
+      });
+    }
+
+    function finishGame() {
+      state.active = false;
+      stopTicker();
+      const accuracy = Math.round((state.correct / TOTAL_ROUNDS) * 100);
+      const avg = state.records.length ? state.records.reduce((sum, r) => sum + r.time, 0) / state.records.length : 0;
+      const correctRecords = state.records.filter(r => r.ok);
+      const best = correctRecords.length ? Math.min(...correctRecords.map(r => r.time)) : 0;
+      els.resultAccuracy.textContent = `${accuracy}%`;
+      els.resultAvg.textContent = `${avg.toFixed(1)}s`;
+      els.resultScore.textContent = String(state.score);
+      els.resultBest.textContent = `${best.toFixed(1)}s`;
+      els.resultLayer.classList.add('show');
+      els.startBtn.style.display = 'inline-block';
+      els.startBtn.textContent = '再开一局';
+    }
+
+    els.startBtn.addEventListener('click', startGame);
+    els.restartBtn.addEventListener('click', startGame);
+    els.submitBtn.addEventListener('click', submitAnswer);
+    els.answerInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') submitAnswer();
+    });
+
+    updateMetrics();
+  </script>
+</body>
+</html>
+
