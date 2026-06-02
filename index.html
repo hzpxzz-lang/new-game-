@@ -154,6 +154,20 @@
       position: relative;
     }
 
+    .visual-frame.paused::after {
+      content: "已暂停";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(13, 17, 22, 0.86);
+      color: var(--yellow);
+      font-size: clamp(28px, 5vw, 46px);
+      font-weight: 900;
+      letter-spacing: 0;
+      z-index: 2;
+    }
+
     .captcha-canvas {
       width: min(100%, 650px);
       height: auto;
@@ -303,6 +317,16 @@
     .btn.teal {
       border-color: rgba(69, 211, 200, 0.65);
       color: #c8fff8;
+    }
+
+    .run-controls {
+      display: none;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .run-controls.show {
+      display: grid;
     }
 
     .feedback {
@@ -494,6 +518,10 @@
             <div id="feedback" class="feedback">按开始进入第一回合。</div>
           </div>
           <button id="startBtn" class="btn teal" type="button">开始</button>
+          <div id="runControls" class="run-controls">
+            <button id="pauseBtn" class="btn teal" type="button">暂停</button>
+            <button id="resetBtn" class="btn" type="button">重开</button>
+          </div>
         </div>
       </section>
 
@@ -553,6 +581,9 @@
       submitBtn: document.getElementById('submitBtn'),
       feedback: document.getElementById('feedback'),
       startBtn: document.getElementById('startBtn'),
+      runControls: document.getElementById('runControls'),
+      pauseBtn: document.getElementById('pauseBtn'),
+      resetBtn: document.getElementById('resetBtn'),
       log: document.getElementById('log'),
       textCount: document.getElementById('textCount'),
       mathCount: document.getElementById('mathCount'),
@@ -573,10 +604,13 @@
       startTime: 0,
       elapsed: 0,
       ticker: null,
+      pendingTimer: null,
       current: null,
       records: [],
       counts: { text: 0, math: 0, image: 0 },
-      selectedImage: null
+      selectedImage: null,
+      paused: false,
+      awaitingNext: false
     };
 
     function randInt(min, max) {
@@ -597,7 +631,10 @@
     }
 
     function startGame() {
+      clearPendingTimer();
       state.active = true;
+      state.paused = false;
+      state.awaitingNext = false;
       state.round = 0;
       state.correct = 0;
       state.score = 0;
@@ -606,21 +643,26 @@
       state.counts = { text: 0, math: 0, image: 0 };
       els.resultLayer.classList.remove('show');
       els.startBtn.style.display = 'none';
+      els.runControls.classList.add('show');
+      els.pauseBtn.textContent = '暂停';
       els.log.innerHTML = '';
       setFeedback('第一题。', '');
       nextRound();
     }
 
     function nextRound() {
+      if (!state.active || state.paused) return;
       if (state.round >= TOTAL_ROUNDS) {
         finishGame();
         return;
       }
+      state.awaitingNext = false;
       state.round += 1;
       const type = TYPES[(state.round - 1) % TYPES.length];
       state.current = makeChallenge(type);
       state.counts[type] += 1;
       state.selectedImage = null;
+      state.elapsed = 0;
       state.startTime = performance.now();
       startTicker();
       renderChallenge();
@@ -735,6 +777,7 @@
         btn.setAttribute('aria-label', item.label);
         btn.innerHTML = makeIconSvg(item.key, item.color, index);
         btn.addEventListener('click', () => {
+          if (state.paused) return;
           state.selectedImage = item.key;
           [...grid.children].forEach(child => child.classList.remove('selected'));
           btn.classList.add('selected');
@@ -773,13 +816,64 @@
       els.timeMetric.textContent = state.elapsed.toFixed(1);
     }
 
+    function clearPendingTimer() {
+      if (state.pendingTimer) {
+        window.clearTimeout(state.pendingTimer);
+        state.pendingTimer = null;
+      }
+    }
+
+    function scheduleNextRound(delay) {
+      clearPendingTimer();
+      state.pendingTimer = window.setTimeout(() => {
+        state.pendingTimer = null;
+        if (!state.paused) nextRound();
+      }, delay);
+    }
+
+    function pauseGame() {
+      if (!state.active) return;
+      if (state.paused) {
+        state.paused = false;
+        els.pauseBtn.textContent = '暂停';
+        setControlsDisabled(false);
+        if (state.awaitingNext) {
+          nextRound();
+          return;
+        }
+        state.startTime = performance.now() - state.elapsed * 1000;
+        startTicker();
+        setFeedback('继续挑战。', '');
+        if (state.current?.type !== 'image') els.answerInput.focus();
+        return;
+      }
+
+      state.paused = true;
+      clearPendingTimer();
+      stopTicker();
+      setControlsDisabled(true);
+      els.pauseBtn.textContent = '继续';
+      setFeedback(state.awaitingNext ? '已暂停。点击继续进入下一题。' : '已暂停。点击继续恢复本题。', '');
+    }
+
+    function setControlsDisabled(disabled) {
+      els.answerInput.disabled = disabled || state.current?.type === 'image';
+      els.submitBtn.disabled = disabled || state.current?.type === 'image';
+      els.visualFrame.classList.toggle('paused', disabled);
+    }
+
+    function resetGame() {
+      startGame();
+    }
+
     function submitAnswer() {
-      if (!state.active || !state.current) return;
+      if (!state.active || state.paused || !state.current) return;
       const c = state.current;
       const raw = c.type === 'image' ? state.selectedImage : els.answerInput.value.trim();
       if (!raw) return;
 
       stopTicker();
+      state.awaitingNext = true;
       const normalized = String(raw).toUpperCase().replace(/\s+/g, '');
       const expected = String(c.value).toUpperCase();
       const ok = normalized === expected;
@@ -798,7 +892,7 @@
       state.records = state.records.slice(0, 5);
       updateMetrics();
       renderLog();
-      window.setTimeout(nextRound, ok ? 420 : 760);
+      scheduleNextRound(ok ? 420 : 760);
     }
 
     function displayAnswer(c) {
@@ -834,6 +928,9 @@
 
     function finishGame() {
       state.active = false;
+      state.paused = false;
+      state.awaitingNext = false;
+      clearPendingTimer();
       stopTicker();
       const accuracy = Math.round((state.correct / TOTAL_ROUNDS) * 100);
       const avg = state.records.length ? state.records.reduce((sum, r) => sum + r.time, 0) / state.records.length : 0;
@@ -844,12 +941,15 @@
       els.resultScore.textContent = String(state.score);
       els.resultBest.textContent = `${best.toFixed(1)}s`;
       els.resultLayer.classList.add('show');
+      els.runControls.classList.remove('show');
       els.startBtn.style.display = 'inline-block';
       els.startBtn.textContent = '再开一局';
     }
 
     els.startBtn.addEventListener('click', startGame);
     els.restartBtn.addEventListener('click', startGame);
+    els.pauseBtn.addEventListener('click', pauseGame);
+    els.resetBtn.addEventListener('click', resetGame);
     els.submitBtn.addEventListener('click', submitAnswer);
     els.answerInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') submitAnswer();
