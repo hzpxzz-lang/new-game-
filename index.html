@@ -777,7 +777,7 @@
         btn.setAttribute('aria-label', item.label);
         btn.innerHTML = makeIconSvg(item.key, item.color, index);
         btn.addEventListener('click', () => {
-          if (state.paused) return;
+          if (state.paused || state.awaitingNext) return;
           state.selectedImage = item.key;
           [...grid.children].forEach(child => child.classList.remove('selected'));
           btn.classList.add('selected');
@@ -867,13 +867,15 @@
     }
 
     function submitAnswer() {
-      if (!state.active || state.paused || !state.current) return;
+      if (!state.active || state.paused || state.awaitingNext || !state.current) return;
       const c = state.current;
       const raw = c.type === 'image' ? state.selectedImage : els.answerInput.value.trim();
       if (!raw) return;
 
       stopTicker();
       state.awaitingNext = true;
+      els.answerInput.disabled = true;
+      els.submitBtn.disabled = true;
       const normalized = String(raw).toUpperCase().replace(/\s+/g, '');
       const expected = String(c.value).toUpperCase();
       const ok = normalized === expected;
@@ -907,7 +909,7 @@
 
     function updateMetrics() {
       els.roundMetric.textContent = `${Math.min(state.round, TOTAL_ROUNDS)}/${TOTAL_ROUNDS}`;
-      els.correctMetric.textContent = String(state.correct);
+      els.correctMetric.textContent = String(Math.min(state.correct, TOTAL_ROUNDS));
       els.scoreMetric.textContent = String(state.score);
       els.textCount.textContent = String(state.counts.text);
       els.mathCount.textContent = String(state.counts.math);
@@ -932,10 +934,12 @@
       state.awaitingNext = false;
       clearPendingTimer();
       stopTicker();
-      const accuracy = Math.round((state.correct / TOTAL_ROUNDS) * 100);
+      const safeCorrect = Math.min(state.correct, TOTAL_ROUNDS);
+      const accuracy = Math.min(100, Math.round((safeCorrect / TOTAL_ROUNDS) * 100));
       const avg = state.records.length ? state.records.reduce((sum, r) => sum + r.time, 0) / state.records.length : 0;
       const correctRecords = state.records.filter(r => r.ok);
       const best = correctRecords.length ? Math.min(...correctRecords.map(r => r.time)) : 0;
+      updateMetrics();
       els.resultAccuracy.textContent = `${accuracy}%`;
       els.resultAvg.textContent = `${avg.toFixed(1)}s`;
       els.resultScore.textContent = String(state.score);
