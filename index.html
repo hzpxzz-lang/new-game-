@@ -51,7 +51,7 @@
     h1 {
       margin: 0;
       font-size: clamp(28px, 4.8vw, 48px);
-      line-height: 1;
+      line-height: 1.08;
       font-weight: 850;
       letter-spacing: 0;
     }
@@ -174,52 +174,24 @@
       display: block;
     }
 
-    .math-box {
-      width: min(100%, 620px);
-      aspect-ratio: 16 / 7;
-      display: grid;
-      place-items: center;
-      border-radius: 8px;
-      background:
-        linear-gradient(135deg, rgba(69, 211, 200, 0.18), transparent 42%),
-        repeating-linear-gradient(45deg, #11171d 0, #11171d 18px, #151d25 18px, #151d25 36px);
-      border: 1px solid #465360;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .math-box::before,
-    .math-box::after {
-      content: "";
-      position: absolute;
-      width: 160%;
-      height: 3px;
-      background: rgba(255, 123, 112, 0.72);
-      transform: rotate(-8deg);
-    }
-
-    .math-box::before { top: 32%; left: -22%; }
-    .math-box::after { bottom: 29%; left: -30%; background: rgba(247, 201, 92, 0.62); transform: rotate(11deg); }
-
-    .math-expression {
-      position: relative;
-      z-index: 1;
-      font-size: clamp(46px, 9vw, 78px);
-      line-height: 1;
-      font-weight: 900;
-      color: #f6f8fb;
-      text-shadow: 0 7px 0 rgba(0, 0, 0, 0.26), 0 0 28px rgba(69, 211, 200, 0.25);
-    }
-
-    .image-grid {
-      width: min(100%, 520px);
+    .choice-grid {
+      width: min(100%, 560px);
       display: grid;
       grid-template-columns: repeat(3, minmax(72px, 1fr));
       gap: 10px;
       padding: 12px;
     }
 
-    .image-tile {
+    .choice-grid.street-grid {
+      width: min(100%, 540px);
+      gap: 6px;
+      padding: 10px;
+      background: #10151b;
+    }
+
+    .choice-tile {
+      position: relative;
+      overflow: hidden;
       min-height: 112px;
       border: 1px solid #465360;
       border-radius: 8px;
@@ -227,26 +199,40 @@
       cursor: pointer;
       display: grid;
       place-items: center;
+      padding: 0;
       transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
     }
 
-    .image-tile:hover,
-    .image-tile:focus-visible {
+    .choice-grid.street-grid .choice-tile {
+      min-height: 104px;
+      aspect-ratio: 1 / 1;
+      border-radius: 4px;
+    }
+
+    .choice-tile:hover,
+    .choice-tile:focus-visible {
       outline: none;
       border-color: var(--yellow);
       background: #202832;
       transform: translateY(-2px);
     }
 
-    .image-tile.selected {
+    .choice-tile.selected {
       border-color: var(--teal);
       box-shadow: inset 0 0 0 2px rgba(69, 211, 200, 0.8);
     }
 
-    .icon-svg {
-      width: 70px;
-      height: 70px;
+    .object-svg,
+    .street-svg {
+      width: 100%;
+      height: 100%;
       display: block;
+    }
+
+    .safety-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
     }
 
     .prompt-row {
@@ -478,9 +464,9 @@
       .round-head { display: grid; }
       .side { grid-template-columns: 1fr; }
       .visual-frame { min-height: 220px; }
-      .image-grid { gap: 8px; padding: 8px; }
-      .image-tile { min-height: 86px; }
-      .icon-svg { width: 58px; height: 58px; }
+      .choice-grid { gap: 8px; padding: 8px; }
+      .choice-tile { min-height: 86px; }
+      .choice-grid.street-grid .choice-tile { min-height: 82px; }
       input { font-size: 20px; }
     }
   </style>
@@ -490,7 +476,7 @@
     <header class="top">
       <div>
         <h1>验证码冲刺</h1>
-        <p class="subtitle">12 回合，越快越准分数越高。</p>
+        <p class="subtitle">12 回合，扭曲文字、物品点选、街景九宫格轮番挑战。</p>
       </div>
       <div class="scorebar" aria-live="polite">
         <div class="metric"><span>回合</span><strong id="roundMetric">1/12</strong></div>
@@ -503,14 +489,14 @@
     <section class="layout">
       <section class="arena">
         <div class="round-head">
-          <span id="typePill" class="pill accent">字符验证码</span>
+          <span id="typePill" class="pill accent">扭曲字符</span>
           <span id="speedPill" class="pill">平均 0.0 秒</span>
         </div>
 
         <div class="captcha-card">
           <div id="visualFrame" class="visual-frame"></div>
           <div class="prompt-row">
-            <div id="targetLine" class="target-line">输入画面中的字符</div>
+            <div id="targetLine" class="target-line">输入画面中的字母或数字</div>
             <div id="answerRow" class="answer-row">
               <input id="answerInput" autocomplete="off" spellcheck="false" inputmode="text" aria-label="验证码输入框">
               <button id="submitBtn" class="btn primary" type="button">提交</button>
@@ -530,9 +516,12 @@
           <h2>验证码类型</h2>
           <div class="type-list">
             <div class="type-item"><span class="dot"></span><span>扭曲字符</span><strong id="textCount">0</strong></div>
-            <div class="type-item"><span class="dot"></span><span>算术题</span><strong id="mathCount">0</strong></div>
-            <div class="type-item"><span class="dot"></span><span>图形选择</span><strong id="imageCount">0</strong></div>
+            <div class="type-item"><span class="dot"></span><span>物品点选</span><strong id="objectCount">0</strong></div>
+            <div class="type-item"><span class="dot"></span><span>九宫格街景</span><strong id="streetCount">0</strong></div>
           </div>
+        </div>
+        <div class="side-block safety-note">
+          本游戏仅为娱乐化验证码模拟玩法，不涉及任何真实平台验证服务。
         </div>
         <div class="side-block">
           <h2>最近记录</h2>
@@ -557,14 +546,40 @@
 
   <script>
     const TOTAL_ROUNDS = 12;
-    const TYPES = ['text', 'math', 'image'];
-    const LABELS = { text: '字符验证码', math: '算术题', image: '图形选择' };
-    const ICONS = [
-      { key: 'star', label: '星星', color: '#f7c95c' },
-      { key: 'circle', label: '圆形', color: '#45d3c8' },
-      { key: 'square', label: '方块', color: '#ff7b70' },
-      { key: 'triangle', label: '三角', color: '#88d36f' },
-      { key: 'diamond', label: '菱形', color: '#b9a7ff' }
+    const TYPES = ['text', 'object', 'street'];
+    const LABELS = { text: '扭曲字符', object: '物品点选', street: '九宫格街景' };
+    const TEXT_CAPTCHAS = [
+      '1234', '7392', 'A9K2', '7P6Q', 'A7K9P', 'X3QM8', '8O0Q', 'RNM1L',
+      '0OQ8B', 'B6D9P', 'K2M7X', 'V4N8T', '5ZQ2H', 'M1L0O', 'Q8B3D',
+      '2F9K7', 'H6P0R', 'X7C4N', 'T9W3Y', '4G8S2'
+    ];
+    const OBJECT_ITEMS = [
+      { key: 'train', label: '火车', color: '#4f8fd9' },
+      { key: 'ticket', label: '车票', color: '#e7c96b' },
+      { key: 'idcard', label: '身份证', color: '#66b8d0' },
+      { key: 'noodles', label: '泡面', color: '#ff8a58' },
+      { key: 'keyboard', label: '键盘', color: '#d9dde5' },
+      { key: 'mouse', label: '鼠标', color: '#b7c2d0' },
+      { key: 'cup', label: '水杯', color: '#71c9ba' },
+      { key: 'powerbank', label: '充电宝', color: '#9aa6b7' },
+      { key: 'deliveryBag', label: '外卖袋', color: '#f2c14e' },
+      { key: 'badge', label: '工牌', color: '#7aa6ff' },
+      { key: 'luggage', label: '行李箱', color: '#b58be8' },
+      { key: 'seat', label: '候车厅座椅', color: '#72a0a8' }
+    ];
+    const STREET_ITEMS = [
+      { key: 'trafficLight', label: '红绿灯', color: '#48c06a' },
+      { key: 'crosswalk', label: '斑马线', color: '#f4f6f8' },
+      { key: 'bus', label: '公交车', color: '#f0bd3d' },
+      { key: 'taxi', label: '出租车', color: '#f2c84b' },
+      { key: 'bicycle', label: '自行车', color: '#45d3c8' },
+      { key: 'motorcycle', label: '摩托车', color: '#e16e64' },
+      { key: 'rider', label: '外卖骑手', color: '#49b85f' },
+      { key: 'roadSign', label: '路牌', color: '#64a8ff' },
+      { key: 'hydrant', label: '消防栓', color: '#e44f49' },
+      { key: 'sidewalk', label: '人行道', color: '#bec6c9' },
+      { key: 'cone', label: '交通锥', color: '#ff8848' },
+      { key: 'stopSign', label: '停车标志', color: '#d84f4b' }
     ];
 
     const els = {
@@ -586,8 +601,8 @@
       resetBtn: document.getElementById('resetBtn'),
       log: document.getElementById('log'),
       textCount: document.getElementById('textCount'),
-      mathCount: document.getElementById('mathCount'),
-      imageCount: document.getElementById('imageCount'),
+      objectCount: document.getElementById('objectCount'),
+      streetCount: document.getElementById('streetCount'),
       resultLayer: document.getElementById('resultLayer'),
       resultAccuracy: document.getElementById('resultAccuracy'),
       resultAvg: document.getElementById('resultAvg'),
@@ -608,8 +623,9 @@
       current: null,
       pendingAction: null,
       records: [],
-      counts: { text: 0, math: 0, image: 0 },
-      selectedImage: null,
+      counts: { text: 0, object: 0, street: 0 },
+      selectedTiles: null,
+      retryType: null,
       paused: false,
       awaitingNext: false
     };
@@ -633,6 +649,8 @@
 
     function startGame() {
       clearPendingTimer();
+      if (state.ticker) window.clearInterval(state.ticker);
+      state.ticker = null;
       state.active = true;
       state.paused = false;
       state.awaitingNext = false;
@@ -642,7 +660,10 @@
       state.score = 0;
       state.elapsed = 0;
       state.records = [];
-      state.counts = { text: 0, math: 0, image: 0 };
+      state.counts = { text: 0, object: 0, street: 0 };
+      state.retryType = null;
+      els.visualFrame.classList.remove('paused');
+      els.timeMetric.textContent = '0.0';
       els.resultLayer.classList.remove('show');
       els.startBtn.style.display = 'none';
       els.runControls.classList.add('show');
@@ -660,69 +681,75 @@
       }
       state.awaitingNext = false;
       state.pendingAction = null;
+      state.retryType = null;
       state.round += 1;
       const type = TYPES[(state.round - 1) % TYPES.length];
       state.current = makeChallenge(type);
       state.counts[type] += 1;
-      state.selectedImage = null;
+      state.selectedTiles = null;
       state.elapsed = 0;
+      els.timeMetric.textContent = '0.0';
       state.startTime = performance.now();
       startTicker();
       renderChallenge();
       updateMetrics();
-      if (type !== 'image') {
+      if (type === 'text') {
         window.setTimeout(() => els.answerInput.focus(), 0);
       }
     }
 
     function makeChallenge(type) {
       if (type === 'text') {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let value = '';
-        for (let i = 0; i < 5; i++) value += pick(chars);
-        return { type, value, prompt: '输入画面中的字符' };
+        const value = pick(TEXT_CAPTCHAS);
+        return { type, value, prompt: '输入画面中的字母或数字' };
       }
-      if (type === 'math') {
-        const a = randInt(8, 46);
-        const b = randInt(3, 29);
-        const op = pick(['+', '-', '×']);
-        const value = op === '+' ? a + b : op === '-' ? a - b : a * b;
-        return { type, value: String(value), expression: `${a} ${op} ${b}`, prompt: '输入计算结果' };
+      if (type === 'object') {
+        return makeTileChallenge(type, OBJECT_ITEMS, randInt(2, 3), '请选择所有');
       }
-      const target = pick(ICONS);
-      const targetCount = randInt(2, 3);
-      const distractors = ICONS.filter(item => item.key !== target.key);
+      return makeTileChallenge(type, STREET_ITEMS, randInt(2, 4), '请选择所有包含');
+    }
+
+    function makeTileChallenge(type, pool, targetCount, promptPrefix) {
+      const target = pick(pool);
+      const distractors = pool.filter(item => item.key !== target.key);
       const items = [];
-      for (let i = 0; i < targetCount; i++) items.push({ ...target, uid: `target-${i}` });
+      for (let i = 0; i < targetCount; i++) {
+        items.push({ ...target, uid: `${type}-target-${i}`, hasTarget: true, variant: randInt(1, 99) });
+      }
       while (items.length < 9) {
         const item = pick(distractors);
-        items.push({ ...item, uid: `${item.key}-${items.length}-${randInt(100, 999)}` });
+        items.push({ ...item, uid: `${type}-${item.key}-${items.length}-${randInt(100, 999)}`, hasTarget: false, variant: randInt(1, 99) });
       }
+      const shuffled = shuffle(items).map((item, index) => ({ ...item, index }));
       return {
         type,
         value: target.key,
         target,
         targetCount,
         selectedIndexes: new Set(),
-        items: shuffle(items),
-        prompt: `选择所有 ${target.label}`
+        items: shuffled,
+        sceneSeed: randInt(1000, 9999),
+        prompt: `${promptPrefix}「${target.label}」`
       };
     }
 
     function renderChallenge() {
       const c = state.current;
+      const isTileChoice = c.type === 'object' || c.type === 'street';
       els.typePill.textContent = LABELS[c.type];
-      els.targetLine.innerHTML = c.type === 'image' ? `点击所有 <strong>${c.target.label}</strong>（共 ${c.targetCount} 个）` : c.prompt;
+      els.targetLine.innerHTML = isTileChoice
+        ? `${c.type === 'street' ? '请选择所有包含' : '请选择所有'} <strong>${c.target.label}</strong>（共 ${c.targetCount} 个）`
+        : c.prompt;
       els.visualFrame.innerHTML = '';
       els.answerInput.value = '';
-      els.answerInput.disabled = c.type === 'image';
-      els.submitBtn.disabled = c.type === 'image';
-      els.answerRow.style.display = c.type === 'image' ? 'none' : 'grid';
-      setFeedback(c.type === 'image' ? '点选目标图形。' : '输入后提交。', '');
+      els.answerInput.disabled = isTileChoice;
+      els.submitBtn.disabled = isTileChoice;
+      els.answerRow.style.display = isTileChoice ? 'none' : 'grid';
+      setFeedback(isTileChoice ? '点选所有目标，点错会重开本回合。' : '输入后提交。', '');
 
       if (c.type === 'text') renderTextCaptcha(c.value);
-      if (c.type === 'math') renderMathCaptcha(c.expression);
-      if (c.type === 'image') renderImageCaptcha(c.items);
+      if (c.type === 'object') renderTileCaptcha(c.items, 'object');
+      if (c.type === 'street') renderTileCaptcha(c.items, 'street', c.sceneSeed);
     }
 
     function renderTextCaptcha(value) {
@@ -733,35 +760,61 @@
       const ctx = canvas.getContext('2d');
 
       const bg = ctx.createLinearGradient(0, 0, 900, 360);
-      bg.addColorStop(0, '#f2f6f8');
-      bg.addColorStop(1, '#d8eef0');
+      bg.addColorStop(0, '#f4f5f2');
+      bg.addColorStop(0.55, '#dfe7e5');
+      bg.addColorStop(1, '#eef1e8');
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, 900, 360);
 
-      for (let i = 0; i < 420; i++) {
-        ctx.fillStyle = `rgba(${randInt(30, 160)}, ${randInt(70, 190)}, ${randInt(90, 210)}, ${Math.random() * 0.32})`;
-        ctx.fillRect(randInt(0, 900), randInt(0, 360), randInt(1, 5), randInt(1, 5));
+      ctx.globalAlpha = 0.28;
+      for (let x = -80; x < 980; x += 38) {
+        ctx.strokeStyle = '#b7c2c7';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x + 210, 360);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      for (let i = 0; i < 680; i++) {
+        ctx.fillStyle = `rgba(${randInt(35, 170)}, ${randInt(60, 185)}, ${randInt(75, 210)}, ${Math.random() * 0.34})`;
+        ctx.fillRect(randInt(0, 900), randInt(0, 360), randInt(1, 6), randInt(1, 6));
       }
 
-      for (let i = 0; i < 12; i++) {
-        ctx.strokeStyle = `rgba(${randInt(20, 180)}, ${randInt(60, 170)}, ${randInt(80, 210)}, 0.45)`;
-        ctx.lineWidth = randInt(2, 6);
+      for (let i = 0; i < 16; i++) {
+        ctx.strokeStyle = `rgba(${randInt(30, 180)}, ${randInt(45, 170)}, ${randInt(70, 210)}, ${Math.random() * 0.38 + 0.24})`;
+        ctx.lineWidth = randInt(2, 7);
         ctx.beginPath();
         ctx.moveTo(randInt(-40, 120), randInt(0, 360));
-        ctx.bezierCurveTo(randInt(160, 320), randInt(0, 360), randInt(520, 700), randInt(0, 360), randInt(820, 960), randInt(0, 360));
+        ctx.bezierCurveTo(
+          randInt(140, 300), randInt(0, 360),
+          randInt(520, 720), randInt(0, 360),
+          randInt(820, 970), randInt(0, 360)
+        );
         ctx.stroke();
       }
 
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.font = '900 104px Segoe UI, Arial, sans-serif';
-      const colors = ['#182a3a', '#b54f55', '#247a76', '#7255a0', '#9c6a17'];
-      [...value].forEach((ch, i) => {
+      const chars = [...value];
+      const fonts = ['Arial Black', 'Georgia', 'Trebuchet MS', 'Microsoft YaHei', 'KaiTi', 'SimHei'];
+      const baseSize = chars.length >= 8 ? 62 : chars.length >= 6 ? 76 : 104;
+      const step = Math.min(140, 760 / Math.max(chars.length, 1));
+      const startX = 450 - (step * (chars.length - 1)) / 2;
+      const colors = ['#1f2a39', '#a64046', '#23756f', '#7255a0', '#9b6817', '#315f9c'];
+
+      chars.forEach((ch, i) => {
         ctx.save();
-        const x = 160 + i * 150 + randInt(-10, 10);
-        const y = 180 + randInt(-22, 22);
+        const x = startX + i * step + randInt(-12, 12);
+        const y = 180 + Math.sin(i * 1.35 + value.length) * 26 + randInt(-10, 10);
         ctx.translate(x, y);
-        ctx.rotate((randInt(-22, 22) * Math.PI) / 180);
+        ctx.rotate((randInt(-26, 26) * Math.PI) / 180);
+        ctx.font = `900 ${baseSize + randInt(-8, 10)}px "${pick(fonts)}", sans-serif`;
+        ctx.fillStyle = 'rgba(64, 152, 180, 0.32)';
+        ctx.fillText(ch, randInt(3, 8), randInt(-4, 5));
+        ctx.fillStyle = 'rgba(210, 70, 80, 0.28)';
+        ctx.fillText(ch, randInt(-8, -3), randInt(-4, 4));
         ctx.fillStyle = colors[i % colors.length];
         ctx.shadowColor = 'rgba(0,0,0,0.16)';
         ctx.shadowBlur = 8;
@@ -769,47 +822,150 @@
         ctx.restore();
       });
 
+      for (let i = 0; i < 7; i++) {
+        ctx.save();
+        ctx.translate(randInt(60, 820), randInt(70, 300));
+        ctx.rotate((randInt(-15, 15) * Math.PI) / 180);
+        ctx.fillStyle = `rgba(222, 226, 220, ${Math.random() * 0.28 + 0.18})`;
+        ctx.fillRect(-randInt(70, 150), -randInt(5, 14), randInt(120, 280), randInt(10, 26));
+        ctx.restore();
+      }
+
+      ctx.strokeStyle = 'rgba(38, 47, 55, 0.28)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      for (let x = 0; x <= 900; x += 18) {
+        const y = 185 + Math.sin((x + value.length * 31) / 52) * 34;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
       els.visualFrame.appendChild(canvas);
     }
 
-    function renderMathCaptcha(expression) {
-      const box = document.createElement('div');
-      box.className = 'math-box';
-      const exp = document.createElement('div');
-      exp.className = 'math-expression';
-      exp.textContent = expression;
-      box.appendChild(exp);
-      els.visualFrame.appendChild(box);
-    }
-
-    function renderImageCaptcha(items) {
+    function renderTileCaptcha(items, mode, sceneSeed = 0) {
       const grid = document.createElement('div');
-      grid.className = 'image-grid';
+      grid.className = `choice-grid ${mode === 'street' ? 'street-grid' : 'object-grid'}`;
       items.forEach((item, index) => {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'image-tile';
+        btn.className = 'choice-tile';
         btn.setAttribute('aria-label', item.label);
-        btn.innerHTML = makeIconSvg(item.key, item.color, index);
+        btn.dataset.target = item.hasTarget ? 'true' : 'false';
+        btn.innerHTML = mode === 'street'
+          ? makeStreetTileSvg(item, index, sceneSeed)
+          : makeObjectTileSvg(item, index);
         btn.addEventListener('click', () => {
-          handleImageTileClick(item, index, btn);
+          handleTileClick(item, index, btn);
         });
         grid.appendChild(btn);
       });
       els.visualFrame.appendChild(grid);
     }
 
-    function makeIconSvg(key, color, seed) {
-      const bg = seed % 2 ? '#18212a' : '#202832';
-      const noise = `<circle cx="${18 + seed * 3 % 44}" cy="${20 + seed * 7 % 42}" r="4" fill="rgba(255,255,255,.16)"/>`;
-      const common = `fill="${color}" stroke="rgba(255,255,255,.58)" stroke-width="3"`;
-      let shape = '';
-      if (key === 'star') shape = `<path ${common} d="M50 10 L61 36 L89 38 L68 56 L75 84 L50 69 L25 84 L32 56 L11 38 L39 36 Z"/>`;
-      if (key === 'circle') shape = `<circle ${common} cx="50" cy="50" r="31"/>`;
-      if (key === 'square') shape = `<rect ${common} x="22" y="22" width="56" height="56" rx="8"/>`;
-      if (key === 'triangle') shape = `<path ${common} d="M50 15 L86 80 H14 Z"/>`;
-      if (key === 'diamond') shape = `<path ${common} d="M50 12 L86 50 L50 88 L14 50 Z"/>`;
-      return `<svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="14" fill="${bg}"/>${noise}${shape}<path d="M12 88 C34 76 66 98 88 80" fill="none" stroke="rgba(247,201,92,.34)" stroke-width="4"/></svg>`;
+    function makeObjectTileSvg(item, seed) {
+      const x = 60 + ((seed % 3) - 1) * 9 + (item.variant % 5) - 2;
+      const y = 52 + ((seed % 4) - 1.5) * 6;
+      const rotate = ((item.variant % 9) - 4) * 4;
+      const scale = 0.86 + (item.variant % 4) * 0.06;
+      const bg = seed % 2 ? '#d4d8d6' : '#c9cfca';
+      const crop = seed % 3 === 0 ? `<rect x="-8" y="70" width="70" height="30" fill="rgba(215,220,216,.58)"/>` : '';
+      return `
+        <svg class="object-svg" viewBox="0 0 120 100" aria-hidden="true">
+          <rect width="120" height="100" fill="${bg}"/>
+          <g opacity=".38">
+            <rect x="${12 + seed * 7 % 90}" y="${10 + seed * 11 % 70}" width="16" height="10" fill="#eef1ec"/>
+            <rect x="${30 + seed * 13 % 70}" y="${20 + seed * 5 % 58}" width="20" height="14" fill="#aab3b1"/>
+            <path d="M0 ${24 + seed * 9 % 56} L120 ${6 + seed * 3 % 72}" stroke="#eef1ec" stroke-width="4"/>
+            <path d="M0 ${78 - seed * 4 % 34} L120 ${48 + seed * 6 % 42}" stroke="#8b9697" stroke-width="2"/>
+          </g>
+          <g transform="translate(${x} ${y}) rotate(${rotate}) scale(${scale})" style="filter: blur(.35px) saturate(.84);">
+            ${objectShape(item.key, item.color)}
+          </g>
+          ${crop}
+          <rect width="120" height="100" fill="rgba(35,42,46,.08)"/>
+          <rect x="0" y="0" width="120" height="100" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="2"/>
+        </svg>`;
+    }
+
+    function objectShape(key, color) {
+      const stroke = 'stroke="rgba(255,255,255,.76)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"';
+      const darkStroke = 'stroke="rgba(38,47,55,.72)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"';
+      if (key === 'train') return `<g><rect x="-38" y="-22" width="76" height="42" rx="8" fill="${color}" ${stroke}/><rect x="-27" y="-12" width="16" height="12" fill="#dff5ff"/><rect x="-5" y="-12" width="16" height="12" fill="#dff5ff"/><rect x="17" y="-12" width="16" height="12" fill="#dff5ff"/><circle cx="-22" cy="25" r="7" fill="#26313b"/><circle cx="24" cy="25" r="7" fill="#26313b"/><path d="M-42 35 H42" ${darkStroke}/></g>`;
+      if (key === 'ticket') return `<g><path d="M-38 -24 H38 V24 H-38 Q-30 14 -38 5 Q-28 0 -38 -8 Z" fill="${color}" ${stroke}/><path d="M-20 -8 H22 M-20 8 H10" ${darkStroke}/><circle cx="28" cy="-12" r="3" fill="#26313b"/><circle cx="28" cy="0" r="3" fill="#26313b"/><circle cx="28" cy="12" r="3" fill="#26313b"/></g>`;
+      if (key === 'idcard') return `<g><rect x="-40" y="-24" width="80" height="48" rx="7" fill="${color}" ${stroke}/><circle cx="-22" cy="-2" r="11" fill="#f0d6c8"/><path d="M-34 18 Q-22 5 -10 18" fill="#406272"/><path d="M2 -10 H28 M2 4 H32 M2 16 H22" ${darkStroke}/></g>`;
+      if (key === 'noodles') return `<g><path d="M-32 -12 H32 L24 30 H-24 Z" fill="${color}" ${stroke}/><ellipse cx="0" cy="-13" rx="34" ry="12" fill="#fff4c7" ${stroke}/><path d="M-20 -13 C-12 -21 -5 -5 2 -13 S18 -20 24 -11" fill="none" stroke="#d19b38" stroke-width="4"/><path d="M-16 6 H16" ${darkStroke}/></g>`;
+      if (key === 'keyboard') return `<g><rect x="-42" y="-24" width="84" height="48" rx="8" fill="${color}" ${darkStroke}/>${keyboardKeys()}</g>`;
+      if (key === 'mouse') return `<g><path d="M0 -34 C26 -32 38 -12 32 14 C27 36 -27 36 -32 14 C-38 -12 -26 -32 0 -34 Z" fill="${color}" ${stroke}/><path d="M0 -30 V-4 M-14 -8 H14" ${darkStroke}/></g>`;
+      if (key === 'cup') return `<g><path d="M-24 -28 H22 L16 30 H-18 Z" fill="${color}" ${stroke}/><path d="M24 -10 C42 -8 42 16 20 14" fill="none" ${stroke}/><path d="M-20 -36 H20" ${darkStroke}/></g>`;
+      if (key === 'powerbank') return `<g><rect x="-36" y="-26" width="72" height="52" rx="10" fill="${color}" ${stroke}/><circle cx="-16" cy="-8" r="4" fill="#26313b"/><circle cx="0" cy="-8" r="4" fill="#26313b"/><path d="M18 4 H32 Q44 4 40 18" fill="none" ${darkStroke}/></g>`;
+      if (key === 'deliveryBag') return `<g><path d="M-34 -18 H28 L38 28 H-28 Z" fill="${color}" ${stroke}/><path d="M-16 -18 Q0 -42 18 -18" fill="none" ${darkStroke}/><path d="M-18 4 H18 M-10 16 H24" ${darkStroke}/></g>`;
+      if (key === 'badge') return `<g><path d="M-22 -42 L0 -18 L22 -42" fill="none" ${darkStroke}/><rect x="-30" y="-18" width="60" height="52" rx="6" fill="${color}" ${stroke}/><circle cx="-12" cy="2" r="9" fill="#e8d4c2"/><path d="M4 -2 H20 M4 12 H18" ${darkStroke}/></g>`;
+      if (key === 'luggage') return `<g><rect x="-30" y="-28" width="60" height="62" rx="8" fill="${color}" ${stroke}/><path d="M-14 -28 V34 M14 -28 V34 M-12 -34 Q0 -45 12 -34" ${darkStroke}/><circle cx="-18" cy="39" r="5" fill="#26313b"/><circle cx="18" cy="39" r="5" fill="#26313b"/></g>`;
+      return `<g><path d="M-38 4 H28 Q38 4 38 16 V24 H-44 V14 Q-44 4 -38 4 Z" fill="${color}" ${stroke}/><path d="M-32 4 V-14 H-12 V4 M2 4 V-14 H22 V4 M-42 28 H42" ${darkStroke}/></g>`;
+    }
+
+    function keyboardKeys() {
+      let keys = '';
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 6; c++) {
+          keys += `<rect x="${-33 + c * 12}" y="${-16 + r * 13}" width="8" height="8" rx="1.5" fill="#33404b" opacity=".8"/>`;
+        }
+      }
+      return keys;
+    }
+
+    function makeStreetTileSvg(item, index, seed) {
+      const col = index % 3;
+      const row = Math.floor(index / 3);
+      const vx = col * 120;
+      const vy = row * 120;
+      const x = vx + 60 + ((item.variant % 5) - 2) * 9;
+      const y = vy + 60 + ((item.variant % 7) - 3) * 6;
+      const scale = 0.78 + (item.variant % 4) * 0.08;
+      return `
+        <svg class="street-svg" viewBox="${vx} ${vy} 120 120" aria-hidden="true">
+          <rect x="0" y="0" width="360" height="360" fill="#b8c7ce"/>
+          <rect x="0" y="0" width="360" height="125" fill="#b7d3df"/>
+          <rect x="8" y="52" width="72" height="96" fill="#9da8ad"/>
+          <rect x="92" y="32" width="86" height="128" fill="#b0a596"/>
+          <rect x="206" y="45" width="62" height="116" fill="#8e9ca2"/>
+          <rect x="282" y="28" width="74" height="138" fill="#b7a788"/>
+          <rect x="96" y="66" width="58" height="18" fill="#c9494a" opacity=".64"/>
+          <rect x="226" y="72" width="46" height="16" fill="#4da66a" opacity=".56"/>
+          <path d="M0 180 H360 V360 H0 Z" fill="#555e64"/>
+          <path d="M0 164 H360 V207 H0 Z" fill="#aeb7b7"/>
+          <path d="M116 190 L180 360 H88 L34 190 Z" fill="#454d52"/>
+          <path d="M244 190 L296 360 H206 L180 190 Z" fill="#454d52"/>
+          <path d="M172 214 L160 360 M190 214 L203 360" stroke="#e4e6df" stroke-width="5" stroke-dasharray="18 18" opacity=".74"/>
+          <g opacity=".35">
+            <rect x="${22 + seed % 42}" y="${18 + seed % 70}" width="18" height="12" fill="#eef2f0"/>
+            <rect x="${190 + seed % 54}" y="${42 + seed % 62}" width="22" height="14" fill="#d9e4e5"/>
+            <path d="M0 ${240 + seed % 24} H360" stroke="#737d82" stroke-width="3"/>
+          </g>
+          <g transform="translate(${x} ${y}) scale(${scale})">
+            ${streetShape(item.key, item.color, item.variant)}
+          </g>
+          <rect x="${vx}" y="${vy}" width="120" height="120" fill="rgba(35,42,46,.08)"/>
+          <rect x="${vx}" y="${vy}" width="120" height="120" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2"/>
+        </svg>`;
+    }
+
+    function streetShape(key, color, seed) {
+      const stroke = 'stroke="rgba(30,36,42,.76)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"';
+      if (key === 'trafficLight') return `<g><path d="M0 -36 V40" ${stroke}/><rect x="-13" y="-44" width="26" height="52" rx="7" fill="#26313b"/><circle cx="0" cy="-30" r="6" fill="#d64f47"/><circle cx="0" cy="-14" r="6" fill="#e8c548"/><circle cx="0" cy="2" r="6" fill="${color}"/></g>`;
+      if (key === 'crosswalk') return `<g transform="rotate(${-8 + seed % 16})"><rect x="-52" y="-20" width="28" height="12" fill="${color}" opacity=".92"/><rect x="-18" y="-13" width="28" height="12" fill="${color}" opacity=".92"/><rect x="16" y="-6" width="28" height="12" fill="${color}" opacity=".92"/><rect x="-36" y="15" width="28" height="12" fill="${color}" opacity=".82"/><rect x="0" y="22" width="28" height="12" fill="${color}" opacity=".82"/></g>`;
+      if (key === 'bus') return `<g><rect x="-48" y="-24" width="96" height="48" rx="8" fill="${color}" ${stroke}/><rect x="-36" y="-14" width="20" height="14" fill="#d8f0f6"/><rect x="-10" y="-14" width="20" height="14" fill="#d8f0f6"/><rect x="16" y="-14" width="20" height="14" fill="#d8f0f6"/><circle cx="-28" cy="28" r="8" fill="#20272d"/><circle cx="30" cy="28" r="8" fill="#20272d"/></g>`;
+      if (key === 'taxi') return `<g><path d="M-40 12 L-28 -10 H18 L36 12 V25 H-40 Z" fill="${color}" ${stroke}/><rect x="-8" y="-24" width="20" height="10" rx="3" fill="#f7f0cf" ${stroke}/><circle cx="-25" cy="28" r="7" fill="#20272d"/><circle cx="24" cy="28" r="7" fill="#20272d"/></g>`;
+      if (key === 'bicycle') return `<g><circle cx="-28" cy="20" r="18" fill="none" ${stroke}/><circle cx="28" cy="20" r="18" fill="none" ${stroke}/><path d="M-28 20 L-6 -8 L10 20 H-28 M-6 -8 H16 L28 20 M-6 -8 L-12 -22" fill="none" ${stroke}/></g>`;
+      if (key === 'motorcycle') return `<g><circle cx="-28" cy="22" r="15" fill="none" ${stroke}/><circle cx="30" cy="22" r="15" fill="none" ${stroke}/><path d="M-22 18 L-4 0 H18 L34 18 M-4 0 L-10 -18 M18 0 L30 -12" fill="none" ${stroke}/><path d="M-6 0 H22" stroke="${color}" stroke-width="9" stroke-linecap="round"/></g>`;
+      if (key === 'rider') return `<g><circle cx="-6" cy="-28" r="10" fill="#f2d2bd" ${stroke}/><path d="M-10 -16 L-18 16 M-8 -10 L18 0 M-16 16 L-30 34 M-16 16 L8 34" fill="none" ${stroke}/><rect x="12" y="-16" width="28" height="24" rx="5" fill="${color}" ${stroke}/></g>`;
+      if (key === 'roadSign') return `<g><path d="M0 -30 V42" ${stroke}/><rect x="-34" y="-44" width="68" height="30" rx="4" fill="${color}" ${stroke}/><path d="M-22 -30 H18" stroke="#eaf4ff" stroke-width="5" stroke-linecap="round"/></g>`;
+      if (key === 'hydrant') return `<g><path d="M-14 -10 H14 V30 H-14 Z" fill="${color}" ${stroke}/><path d="M-20 0 H20 M-10 -10 Q0 -34 10 -10 M-24 34 H24" fill="none" ${stroke}/></g>`;
+      if (key === 'sidewalk') return `<g><rect x="-50" y="-28" width="100" height="56" fill="${color}" opacity=".9" ${stroke}/><path d="M-50 -8 H50 M-24 -28 V28 M18 -28 V28" stroke="#7b878d" stroke-width="3"/></g>`;
+      if (key === 'cone') return `<g><path d="M0 -34 L28 34 H-28 Z" fill="${color}" ${stroke}/><path d="M-13 -2 H13 M-20 18 H20" stroke="#fff1d6" stroke-width="7"/><rect x="-34" y="32" width="68" height="10" rx="3" fill="#2f363c"/></g>`;
+      return `<g><path d="M0 -44 L28 -28 L44 0 L28 28 L0 44 L-28 28 L-44 0 L-28 -28 Z" fill="${color}" ${stroke}/><path d="M-20 0 H20" stroke="#fff6f0" stroke-width="9" stroke-linecap="round"/></g>`;
     }
 
     function startTicker() {
@@ -844,22 +1000,24 @@
       }, delay);
     }
 
-    function scheduleImageRetry(delay) {
+    function scheduleTileRetry(delay) {
       clearPendingTimer();
       state.pendingAction = 'retry';
+      state.retryType = state.current?.type || state.retryType;
       state.pendingTimer = window.setTimeout(() => {
         state.pendingTimer = null;
         state.pendingAction = null;
-        if (!state.paused) retryImageRound();
+        if (!state.paused) retryTileRound();
       }, delay);
     }
 
-    function retryImageRound() {
+    function retryTileRound() {
       if (!state.active || state.paused) return;
+      const type = state.retryType || state.current?.type || 'object';
       state.awaitingNext = false;
       state.pendingAction = null;
-      state.selectedImage = null;
-      state.current = makeChallenge('image');
+      state.selectedTiles = null;
+      state.current = makeChallenge(type);
       state.elapsed = 0;
       state.startTime = performance.now();
       startTicker();
@@ -874,14 +1032,14 @@
         els.pauseBtn.textContent = '暂停';
         setControlsDisabled(false);
         if (state.awaitingNext) {
-          if (state.pendingAction === 'retry') retryImageRound();
+          if (state.pendingAction === 'retry') retryTileRound();
           else nextRound();
           return;
         }
         state.startTime = performance.now() - state.elapsed * 1000;
         startTicker();
         setFeedback('继续挑战。', '');
-        if (state.current?.type !== 'image') els.answerInput.focus();
+        if (state.current?.type === 'text') els.answerInput.focus();
         return;
       }
 
@@ -894,8 +1052,9 @@
     }
 
     function setControlsDisabled(disabled) {
-      els.answerInput.disabled = disabled || state.current?.type === 'image';
-      els.submitBtn.disabled = disabled || state.current?.type === 'image';
+      const isTileChoice = state.current?.type === 'object' || state.current?.type === 'street';
+      els.answerInput.disabled = disabled || isTileChoice;
+      els.submitBtn.disabled = disabled || isTileChoice;
       els.visualFrame.classList.toggle('paused', disabled);
     }
 
@@ -906,7 +1065,7 @@
     function submitAnswer() {
       if (!state.active || state.paused || state.awaitingNext || !state.current) return;
       const c = state.current;
-      if (c.type === 'image') return;
+      if (c.type !== 'text') return;
       const raw = els.answerInput.value.trim();
       if (!raw) return;
 
@@ -917,14 +1076,15 @@
       scheduleNextRound(ok ? 420 : 760);
     }
 
-    function handleImageTileClick(item, index, button) {
-      if (!state.active || state.paused || state.awaitingNext || !state.current || state.current.type !== 'image') return;
+    function handleTileClick(item, index, button) {
+      const isTileChoice = state.current?.type === 'object' || state.current?.type === 'street';
+      if (!state.active || state.paused || state.awaitingNext || !state.current || !isTileChoice) return;
       const c = state.current;
       if (c.selectedIndexes.has(index)) return;
 
       if (item.key !== c.value) {
         finishAttempt(c, false, `点错了，本回合重开。目标是 ${c.target.label}`);
-        scheduleImageRetry(760);
+        scheduleTileRetry(760);
         return;
       }
 
@@ -963,7 +1123,7 @@
     }
 
     function displayAnswer(c) {
-      if (c.type === 'image') return c.target.label;
+      if (c.type === 'object' || c.type === 'street') return c.target.label;
       return c.value;
     }
 
@@ -977,8 +1137,8 @@
       els.correctMetric.textContent = String(Math.min(state.correct, TOTAL_ROUNDS));
       els.scoreMetric.textContent = String(state.score);
       els.textCount.textContent = String(state.counts.text);
-      els.mathCount.textContent = String(state.counts.math);
-      els.imageCount.textContent = String(state.counts.image);
+      els.objectCount.textContent = String(state.counts.object);
+      els.streetCount.textContent = String(state.counts.street);
       const avg = state.records.length ? state.records.reduce((sum, r) => sum + r.time, 0) / state.records.length : 0;
       els.speedPill.textContent = `平均 ${avg.toFixed(1)} 秒`;
     }
