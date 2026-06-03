@@ -606,6 +606,7 @@
       ticker: null,
       pendingTimer: null,
       current: null,
+      pendingAction: null,
       records: [],
       counts: { text: 0, math: 0, image: 0 },
       selectedImage: null,
@@ -635,6 +636,7 @@
       state.active = true;
       state.paused = false;
       state.awaitingNext = false;
+      state.pendingAction = null;
       state.round = 0;
       state.correct = 0;
       state.score = 0;
@@ -657,6 +659,7 @@
         return;
       }
       state.awaitingNext = false;
+      state.pendingAction = null;
       state.round += 1;
       const type = TYPES[(state.round - 1) % TYPES.length];
       state.current = makeChallenge(type);
@@ -687,17 +690,29 @@
         return { type, value: String(value), expression: `${a} ${op} ${b}`, prompt: '输入计算结果' };
       }
       const target = pick(ICONS);
-      const pool = shuffle(ICONS).slice(0, 4);
-      if (!pool.some(item => item.key === target.key)) pool[randInt(0, pool.length - 1)] = target;
-      const items = shuffle([...pool, ...shuffle(ICONS).slice(0, 5)]).slice(0, 9);
-      const ensured = items.some(item => item.key === target.key) ? items : [target, ...items.slice(1)];
-      return { type, value: target.key, target, items: ensured, prompt: `选择 ${target.label}` };
+      const targetCount = randInt(2, 3);
+      const distractors = ICONS.filter(item => item.key !== target.key);
+      const items = [];
+      for (let i = 0; i < targetCount; i++) items.push({ ...target, uid: `target-${i}` });
+      while (items.length < 9) {
+        const item = pick(distractors);
+        items.push({ ...item, uid: `${item.key}-${items.length}-${randInt(100, 999)}` });
+      }
+      return {
+        type,
+        value: target.key,
+        target,
+        targetCount,
+        selectedIndexes: new Set(),
+        items: shuffle(items),
+        prompt: `选择所有 ${target.label}`
+      };
     }
 
     function renderChallenge() {
       const c = state.current;
       els.typePill.textContent = LABELS[c.type];
-      els.targetLine.innerHTML = c.type === 'image' ? `点击 <strong>${c.target.label}</strong>` : c.prompt;
+      els.targetLine.innerHTML = c.type === 'image' ? `点击所有 <strong>${c.target.label}</strong>（共 ${c.targetCount} 个）` : c.prompt;
       els.visualFrame.innerHTML = '';
       els.answerInput.value = '';
       els.answerInput.disabled = c.type === 'image';
@@ -777,11 +792,7 @@
         btn.setAttribute('aria-label', item.label);
         btn.innerHTML = makeIconSvg(item.key, item.color, index);
         btn.addEventListener('click', () => {
-          if (state.paused || state.awaitingNext) return;
-          state.selectedImage = item.key;
-          [...grid.children].forEach(child => child.classList.remove('selected'));
-          btn.classList.add('selected');
-          submitAnswer();
+          handleImageTileClick(item, index, btn);
         });
         grid.appendChild(btn);
       });
@@ -825,10 +836,35 @@
 
     function scheduleNextRound(delay) {
       clearPendingTimer();
+      state.pendingAction = 'next';
       state.pendingTimer = window.setTimeout(() => {
         state.pendingTimer = null;
+        state.pendingAction = null;
         if (!state.paused) nextRound();
       }, delay);
+    }
+
+    function scheduleImageRetry(delay) {
+      clearPendingTimer();
+      state.pendingAction = 'retry';
+      state.pendingTimer = window.setTimeout(() => {
+        state.pendingTimer = null;
+        state.pendingAction = null;
+        if (!state.paused) retryImageRound();
+      }, delay);
+    }
+
+    function retryImageRound() {
+      if (!state.active || state.paused) return;
+      state.awaitingNext = false;
+      state.pendingAction = null;
+      state.selectedImage = null;
+      state.current = makeChallenge('image');
+      state.elapsed = 0;
+      state.startTime = performance.now();
+      startTicker();
+      renderChallenge();
+      updateMetrics();
     }
 
     function pauseGame() {
@@ -838,7 +874,8 @@
         els.pauseBtn.textContent = '暂停';
         setControlsDisabled(false);
         if (state.awaitingNext) {
-          nextRound();
+          if (state.pendingAction === 'retry') retryImageRound();
+          else nextRound();
           return;
         }
         state.startTime = performance.now() - state.elapsed * 1000;
@@ -869,16 +906,46 @@
     function submitAnswer() {
       if (!state.active || state.paused || state.awaitingNext || !state.current) return;
       const c = state.current;
-      const raw = c.type === 'image' ? state.selectedImage : els.answerInput.value.trim();
+      if (c.type === 'image') return;
+      const raw = els.answerInput.value.trim();
       if (!raw) return;
 
+      const normalized = String(raw).toUpperCase().replace(/\s+/g, '');
+      const expected = String(c.value).toUpperCase();
+      const ok = normalized === expected;
+      finishAttempt(c, ok);
+      scheduleNextRound(ok ? 420 : 760);
+    }
+
+    function handleImageTileClick(item, index, button) {
+      if (!state.active || state.paused || state.awaitingNext || !state.current || state.current.type !== 'image') return;
+      const c = state.current;
+      if (c.selectedIndexes.has(index)) return;
+
+      if (item.key !== c.value) {
+        finishAttempt(c, false, `点错了，本回合重开。目标是 ${c.target.label}`);
+        scheduleImageRetry(760);
+        return;
+      }
+
+      c.selectedIndexes.add(index);
+      button.classList.add('selected');
+      button.disabled = true;
+
+      if (c.selectedIndexes.size === c.targetCount) {
+        finishAttempt(c, true);
+        scheduleNextRound(420);
+        return;
+      }
+
+      setFeedback(`已选 ${c.selectedIndexes.size}/${c.targetCount} 个，继续点击 ${c.target.label}。`, 'good');
+    }
+
+    function finishAttempt(c, ok, failText) {
       stopTicker();
       state.awaitingNext = true;
       els.answerInput.disabled = true;
       els.submitBtn.disabled = true;
-      const normalized = String(raw).toUpperCase().replace(/\s+/g, '');
-      const expected = String(c.value).toUpperCase();
-      const ok = normalized === expected;
       const time = Math.max(0.1, state.elapsed);
       const gained = ok ? Math.max(20, Math.round(300 - time * 28)) : 0;
 
@@ -887,14 +954,12 @@
         state.score += gained;
         setFeedback(`正确 +${gained}`, 'good');
       } else {
-        setFeedback(`错误，答案是 ${displayAnswer(c)}`, 'bad');
+        setFeedback(failText || `错误，答案是 ${displayAnswer(c)}`, 'bad');
       }
 
       state.records.unshift({ type: c.type, ok, time, answer: displayAnswer(c) });
-      state.records = state.records.slice(0, 5);
       updateMetrics();
       renderLog();
-      scheduleNextRound(ok ? 420 : 760);
     }
 
     function displayAnswer(c) {
@@ -920,7 +985,7 @@
 
     function renderLog() {
       els.log.innerHTML = '';
-      state.records.forEach((record) => {
+      state.records.slice(0, 5).forEach((record) => {
         const row = document.createElement('div');
         row.className = 'log-row';
         row.innerHTML = `<span>${LABELS[record.type]} · ${record.ok ? '正确' : '错误'}</span><strong>${record.time.toFixed(1)}s</strong>`;
@@ -932,10 +997,12 @@
       state.active = false;
       state.paused = false;
       state.awaitingNext = false;
+      state.pendingAction = null;
       clearPendingTimer();
       stopTicker();
       const safeCorrect = Math.min(state.correct, TOTAL_ROUNDS);
-      const accuracy = Math.min(100, Math.round((safeCorrect / TOTAL_ROUNDS) * 100));
+      const attempts = Math.max(1, state.records.length);
+      const accuracy = Math.min(100, Math.round((safeCorrect / attempts) * 100));
       const avg = state.records.length ? state.records.reduce((sum, r) => sum + r.time, 0) / state.records.length : 0;
       const correctRecords = state.records.filter(r => r.ok);
       const best = correctRecords.length ? Math.min(...correctRecords.map(r => r.time)) : 0;
