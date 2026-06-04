@@ -3,20 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>验证码冲刺</title>
+  <title>验证码冲刺：人类资格考试</title>
   <style>
     :root {
-      --bg: #111418;
-      --panel: #191f26;
-      --panel-2: #232b34;
-      --line: #3b4652;
-      --text: #f4f8fb;
-      --muted: #9ca9b5;
-      --yellow: #f7c95c;
-      --teal: #45d3c8;
-      --coral: #ff7b70;
-      --green: #88d36f;
-      --shadow: 0 18px 46px rgba(0, 0, 0, 0.34);
+      --bg: #101015;
+      --panel: #1a1b24;
+      --panel-2: #252633;
+      --line: #3d4052;
+      --text: #f8f7ef;
+      --muted: #a9b4c2;
+      --meme-yellow: #ffd23f;
+      --captcha-cyan: #27f5d0;
+      --error-red: #ff4d4d;
+      --weird-purple: #9b5cff;
+      --noodle-orange: #ff8a3d;
+      --human-green: #7cff6b;
+      --shadow: 0 18px 0 rgba(0, 0, 0, .28), 0 28px 60px rgba(0, 0, 0, .48);
     }
 
     * { box-sizing: border-box; }
@@ -26,10 +28,46 @@
     body {
       color: var(--text);
       background:
-        radial-gradient(circle at 20% 10%, rgba(69, 211, 200, 0.14), transparent 28%),
-        linear-gradient(180deg, #111418 0%, #17212a 54%, #101318 100%);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        repeating-linear-gradient(0deg, rgba(255,255,255,.026) 0, rgba(255,255,255,.026) 1px, transparent 1px, transparent 6px),
+        linear-gradient(135deg, rgba(155,92,255,.18), transparent 34%),
+        linear-gradient(180deg, #101015 0%, #171720 54%, #0d0d12 100%);
+      font-family: Inter, "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
       letter-spacing: 0;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    body::before {
+      opacity: .18;
+      background-image:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mix-blend-mode: screen;
+    }
+
+    body::after {
+      content: "I AM HUMAN   不是脚本   请选择所有红绿灯   8O0Q?   已被风控   再点一次   HUMAN CHECK   ";
+      top: 10%;
+      left: -8%;
+      width: 120%;
+      height: 80%;
+      color: rgba(255, 210, 63, .09);
+      font-family: "Arial Black", "Microsoft YaHei", sans-serif;
+      font-size: 28px;
+      line-height: 2.3;
+      word-spacing: 18px;
+      transform: rotate(-8deg);
+      text-shadow: 18px 38px 0 rgba(39,245,208,.06), -28px 80px 0 rgba(255,77,77,.05);
+      white-space: normal;
     }
 
     button, input, select { font: inherit; }
@@ -37,29 +75,52 @@
     .app {
       width: min(1120px, calc(100vw - 32px));
       margin: 0 auto;
-      padding: 28px 0 38px;
+      padding: 26px 0 38px;
     }
 
     .top {
+      position: relative;
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 18px;
       align-items: end;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
+      border: 2px solid #0b0b0e;
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, rgba(255,210,63,.14), transparent 34%),
+        rgba(26,27,36,.9);
+      box-shadow: 6px 6px 0 var(--weird-purple), 0 0 0 1px rgba(255,255,255,.08) inset;
+      padding: 18px;
+      overflow: hidden;
+    }
+
+    .top::after {
+      content: "ANTI-BOT PTSD LAB";
+      position: absolute;
+      right: 14px;
+      top: 10px;
+      color: rgba(39,245,208,.72);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0;
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(28px, 4.8vw, 48px);
+      font-family: "Arial Black", "Microsoft YaHei", "PingFang SC", sans-serif;
+      font-size: 44px;
       line-height: 1.08;
-      font-weight: 850;
+      font-weight: 900;
       letter-spacing: 0;
+      text-shadow: 3px 3px 0 #000, 5px 5px 0 var(--weird-purple), -2px -2px 0 rgba(39,245,208,.45);
     }
 
     .subtitle {
       margin: 8px 0 0;
       color: var(--muted);
       font-size: 15px;
+      max-width: 680px;
     }
 
     .scorebar {
@@ -71,11 +132,13 @@
 
     .metric {
       min-width: 96px;
-      border: 1px solid var(--line);
+      border: 2px solid #0e0e12;
       border-radius: 8px;
-      background: rgba(25, 31, 38, 0.84);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.08), transparent),
+        #20212c;
       padding: 10px 12px;
-      box-shadow: 0 8px 22px rgba(0,0,0,0.16);
+      box-shadow: 3px 3px 0 rgba(0,0,0,.78);
     }
 
     .metric span {
@@ -88,9 +151,16 @@
     .metric strong {
       display: block;
       margin-top: 2px;
+      color: var(--meme-yellow);
+      font-family: "DIN Alternate", "Bahnschrift", "Arial Black", monospace;
       font-size: 22px;
       line-height: 1.08;
-      font-weight: 850;
+      font-weight: 900;
+      text-shadow: 0 0 14px rgba(255,210,63,.22);
+    }
+
+    .metric strong.bump {
+      animation: number-bump .26s ease;
     }
 
     .layout {
@@ -100,16 +170,48 @@
       align-items: start;
     }
 
-    .arena, .side {
-      border: 1px solid var(--line);
+    .arena {
+      position: relative;
+      min-height: 590px;
+      padding: 50px clamp(14px, 2.2vw, 22px) 22px;
+      border: 2px solid #07070a;
       border-radius: 8px;
-      background: rgba(25, 31, 38, 0.9);
+      background:
+        linear-gradient(180deg, rgba(39,245,208,.08), transparent 20%),
+        rgba(26, 27, 36, .94);
       box-shadow: var(--shadow);
+      overflow: hidden;
     }
 
-    .arena {
-      min-height: 590px;
-      padding: clamp(14px, 2.2vw, 22px);
+    .arena::before {
+      content: "HUMAN CHECK / 12 ROUNDS";
+      position: absolute;
+      left: 0;
+      top: 0;
+      right: 0;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      padding-left: 14px;
+      border-bottom: 2px solid #07070a;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0, rgba(255,255,255,.08) 8px, transparent 8px, transparent 16px),
+        var(--meme-yellow);
+      color: #111;
+      font-family: "Arial Black", "Microsoft YaHei", sans-serif;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .arena::after {
+      content: "REC";
+      position: absolute;
+      top: 8px;
+      right: 14px;
+      color: var(--error-red);
+      font-size: 12px;
+      font-weight: 900;
+      text-shadow: 0 0 12px rgba(255,77,77,.85);
     }
 
     .round-head {
@@ -126,14 +228,21 @@
       min-height: 30px;
       padding: 0 10px;
       border-radius: 8px;
-      border: 1px solid var(--line);
+      border: 2px solid var(--line);
       color: var(--muted);
-      background: #141a20;
+      background: #12131a;
       font-size: 13px;
       white-space: nowrap;
+      box-shadow: inset 0 0 18px rgba(39,245,208,.08);
     }
 
-    .pill.accent { color: #fff2c6; border-color: rgba(247, 201, 92, 0.64); }
+    .pill.accent {
+      color: #111;
+      border-color: #111;
+      background: var(--meme-yellow);
+      font-weight: 900;
+      transform: rotate(-.6deg);
+    }
 
     .captcha-card {
       display: grid;
@@ -147,31 +256,112 @@
       min-height: 260px;
       display: grid;
       place-items: center;
-      border: 1px solid #465360;
+      border: 2px solid #09090c;
       border-radius: 8px;
-      background: #0d1116;
+      background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0, rgba(255,255,255,.04) 1px, transparent 1px, transparent 7px),
+        linear-gradient(135deg, rgba(155,92,255,.15), rgba(13,17,22,.96) 38%, rgba(39,245,208,.08));
       overflow: hidden;
       position: relative;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), inset 0 0 40px rgba(0,0,0,.38);
+    }
+
+    .visual-frame::before {
+      content: "LOW-RES CAPTCHA ZONE";
+      position: absolute;
+      left: 10px;
+      top: 8px;
+      z-index: 1;
+      color: rgba(255,210,63,.75);
+      font-size: 11px;
+      font-weight: 900;
+      pointer-events: none;
+    }
+
+    .visual-frame::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, transparent, rgba(39,245,208,.12), transparent),
+        repeating-linear-gradient(90deg, transparent 0, transparent 18px, rgba(255,255,255,.04) 18px, rgba(255,255,255,.04) 20px);
+      mix-blend-mode: screen;
+      opacity: .35;
+      transform: translateX(-100%);
+      animation: scan-pass 3.2s linear infinite;
+    }
+
+    .visual-frame.next-round {
+      animation: glitch-in .38s cubic-bezier(.2, .9, .2, 1);
+    }
+
+    .visual-frame.wrong {
+      animation: wrong-flash .26s ease;
+    }
+
+    .visual-frame.success {
+      animation: success-scan .32s ease;
     }
 
     .visual-frame.paused::after {
-      content: "已暂停";
+      content: "人类缓冲中...\A系统正在等待你的灵魂追上手速";
       position: absolute;
       inset: 0;
       display: grid;
       place-items: center;
-      background: rgba(13, 17, 22, 0.86);
-      color: var(--yellow);
-      font-size: clamp(28px, 5vw, 46px);
+      background: rgba(13, 13, 18, 0.88);
+      color: var(--meme-yellow);
+      font-size: 32px;
       font-weight: 900;
       letter-spacing: 0;
-      z-index: 2;
+      line-height: 1.55;
+      text-align: center;
+      white-space: pre-line;
+      z-index: 3;
+      animation: pause-float 1.6s ease-in-out infinite;
     }
 
     .captcha-canvas {
       width: min(100%, 650px);
       height: auto;
       display: block;
+      filter: saturate(1.15) contrast(1.06);
+    }
+
+    .idle-panel {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 10px;
+      place-items: center;
+      width: min(92%, 460px);
+      min-height: 170px;
+      border: 2px dashed rgba(255,210,63,.68);
+      border-radius: 8px;
+      background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0, rgba(255,255,255,.05) 1px, transparent 1px, transparent 10px),
+        rgba(16,16,21,.62);
+      color: var(--muted);
+      text-align: center;
+      padding: 20px;
+      box-shadow: inset 0 0 30px rgba(39,245,208,.08);
+    }
+
+    .idle-panel strong {
+      color: var(--meme-yellow);
+      font-family: "Arial Black", "Microsoft YaHei", sans-serif;
+      font-size: 28px;
+      text-shadow: 3px 3px 0 #000, -2px -2px 0 rgba(39,245,208,.36);
+    }
+
+    .idle-panel span {
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--captcha-cyan);
+      color: #111;
+      font-size: 12px;
+      font-weight: 900;
     }
 
     .choice-grid {
@@ -180,27 +370,64 @@
       grid-template-columns: repeat(3, minmax(72px, 1fr));
       gap: 10px;
       padding: 12px;
+      perspective: 900px;
     }
 
     .choice-grid.street-grid {
       width: min(100%, 540px);
       gap: 6px;
       padding: 10px;
-      background: #10151b;
+      border: 2px solid #111;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.08), transparent),
+        #101015;
+      transform: skewX(-.8deg);
     }
 
     .choice-tile {
       position: relative;
       overflow: hidden;
       min-height: 112px;
-      border: 1px solid #465360;
+      border: 2px solid #0d0d12;
       border-radius: 8px;
-      background: #141a20;
+      background: #14151d;
       cursor: pointer;
       display: grid;
       place-items: center;
       padding: 0;
-      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+      box-shadow: 3px 3px 0 rgba(0,0,0,.72);
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
+    }
+
+    .choice-tile::after {
+      content: attr(data-sticker);
+      position: absolute;
+      left: 6px;
+      bottom: 6px;
+      max-width: calc(100% - 12px);
+      padding: 3px 5px;
+      border: 1px solid #111;
+      border-radius: 4px;
+      background: var(--meme-yellow);
+      color: #141414;
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 1.1;
+      transform: rotate(-3deg);
+      box-shadow: 2px 2px 0 rgba(0,0,0,.45);
+      z-index: 2;
+    }
+
+    .choice-tile::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        linear-gradient(110deg, transparent 0 44%, rgba(255,255,255,.16) 45%, transparent 46%),
+        repeating-linear-gradient(0deg, transparent 0, transparent 9px, rgba(0,0,0,.12) 9px, rgba(0,0,0,.12) 10px);
+      opacity: .38;
     }
 
     .choice-grid.street-grid .choice-tile {
@@ -212,14 +439,26 @@
     .choice-tile:hover,
     .choice-tile:focus-visible {
       outline: none;
-      border-color: var(--yellow);
-      background: #202832;
-      transform: translateY(-2px);
+      border-color: var(--meme-yellow);
+      background: #20202c;
+      transform: translate(-1px, -2px) rotate(.4deg);
+      box-shadow: 5px 5px 0 var(--weird-purple);
     }
 
     .choice-tile.selected {
-      border-color: var(--teal);
-      box-shadow: inset 0 0 0 2px rgba(69, 211, 200, 0.8);
+      border-color: var(--captcha-cyan);
+      box-shadow: inset 0 0 0 3px rgba(39, 245, 208, .78), 0 0 22px rgba(39,245,208,.26);
+      animation: tile-caught .22s ease;
+    }
+
+    .choice-tile.selected::after {
+      content: "抓到了!";
+      background: var(--captcha-cyan);
+    }
+
+    .choice-tile.wrong {
+      border-color: var(--error-red);
+      animation: human-shake .32s ease;
     }
 
     .object-svg,
@@ -246,7 +485,16 @@
       min-height: 20px;
     }
 
-    .target-line strong { color: var(--yellow); font-weight: 850; }
+    .target-line strong {
+      display: inline-block;
+      padding: 1px 7px;
+      border: 1px solid #111;
+      border-radius: 4px;
+      background: var(--meme-yellow);
+      color: #111;
+      font-weight: 900;
+      transform: rotate(-1deg);
+    }
 
     .answer-row {
       display: grid;
@@ -257,52 +505,73 @@
     input {
       width: 100%;
       min-height: 50px;
-      border: 1px solid var(--line);
+      border: 2px solid var(--meme-yellow);
       border-radius: 8px;
-      background: #10151b;
+      background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0, rgba(255,255,255,.05) 1px, transparent 1px, transparent 9px),
+        #101015;
       color: var(--text);
       padding: 0 14px;
       font-size: 22px;
       font-weight: 750;
       letter-spacing: 0;
+      box-shadow: inset 0 0 18px rgba(255,210,63,.09), 3px 3px 0 #000;
     }
 
     input:focus-visible {
       outline: none;
-      border-color: var(--teal);
-      box-shadow: 0 0 0 3px rgba(69, 211, 200, 0.16);
+      border-color: var(--captcha-cyan);
+      box-shadow: 0 0 0 3px rgba(39,245,208,.16), inset 0 0 18px rgba(39,245,208,.08), 3px 3px 0 #000;
+      animation: focus-jitter .22s ease;
+    }
+
+    input.input-error {
+      border-color: var(--error-red);
+      animation: human-shake .32s ease;
     }
 
     .btn {
       min-height: 44px;
-      border: 1px solid var(--line);
+      border: 2px solid #111;
       border-radius: 8px;
       background: var(--panel-2);
       color: var(--text);
       padding: 0 14px;
-      font-weight: 800;
+      font-weight: 900;
       cursor: pointer;
-      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
       white-space: nowrap;
+      box-shadow: 3px 3px 0 #000;
     }
 
     .btn:hover,
     .btn:focus-visible {
       outline: none;
-      transform: translateY(-1px);
-      border-color: var(--yellow);
-      background: #2d3540;
+      transform: translate(-1px, -2px) rotate(.2deg);
+      border-color: #111;
+      background: #2d2f3d;
+      box-shadow: 5px 5px 0 var(--captcha-cyan);
     }
 
     .btn.primary {
-      border-color: rgba(247, 201, 92, 0.7);
-      background: #3a3120;
-      color: #fff1c4;
+      background: var(--meme-yellow);
+      color: #151515;
+      box-shadow: 4px 4px 0 var(--weird-purple);
+      transform: rotate(-.4deg);
     }
 
     .btn.teal {
-      border-color: rgba(69, 211, 200, 0.65);
-      color: #c8fff8;
+      border-color: var(--captcha-cyan);
+      color: var(--captcha-cyan);
+      background: #12151d;
+      box-shadow: inset 0 0 18px rgba(39,245,208,.12), 3px 3px 0 #000;
+    }
+
+    .btn.danger {
+      border-color: var(--error-red);
+      color: #fff;
+      background: #39171a;
+      box-shadow: 0 0 18px rgba(255,77,77,.28), 3px 3px 0 #000;
     }
 
     .run-controls {
@@ -319,33 +588,71 @@
       min-height: 42px;
       display: flex;
       align-items: center;
+      gap: 8px;
       border-radius: 8px;
-      border: 1px solid var(--line);
-      background: rgba(13, 17, 22, 0.58);
+      border: 2px solid var(--line);
+      background: rgba(13, 13, 18, .72);
       color: var(--muted);
       padding: 10px 12px;
       line-height: 1.35;
       font-size: 14px;
+      box-shadow: inset 0 0 18px rgba(255,255,255,.04);
     }
 
-    .feedback.good { color: #dffbd8; border-color: rgba(136, 211, 111, 0.66); }
-    .feedback.bad { color: #ffd7d3; border-color: rgba(255, 123, 112, 0.66); }
+    .feedback::before {
+      content: "SYS";
+      flex: 0 0 auto;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--line);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .feedback.good {
+      color: #dffbd8;
+      border-color: rgba(124,255,107,.72);
+      animation: success-scan .32s ease;
+    }
+
+    .feedback.good::before {
+      content: "PASS";
+      background: var(--human-green);
+      color: #111;
+    }
+
+    .feedback.bad {
+      color: #ffd7d3;
+      border-color: rgba(255,77,77,.82);
+      animation: human-shake .32s ease;
+    }
+
+    .feedback.bad::before {
+      content: "ERROR";
+      background: var(--error-red);
+      color: #fff;
+    }
 
     .side {
-      padding: 14px;
       display: grid;
       gap: 12px;
     }
 
     .side-block {
-      border: 1px solid var(--line);
+      border: 2px solid #0b0b0f;
       border-radius: 8px;
-      background: rgba(13, 17, 22, 0.45);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), transparent),
+        rgba(26,27,36,.86);
       padding: 12px;
+      box-shadow: 4px 4px 0 rgba(0,0,0,.72);
     }
 
     .side-block h2 {
       margin: 0 0 10px;
+      color: var(--meme-yellow);
+      font-family: "Arial Black", "Microsoft YaHei", sans-serif;
       font-size: 15px;
       line-height: 1.2;
       letter-spacing: 0;
@@ -369,11 +676,12 @@
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      background: var(--teal);
+      background: var(--captcha-cyan);
+      box-shadow: 0 0 12px rgba(39,245,208,.55);
     }
 
-    .type-item:nth-child(2) .dot { background: var(--yellow); }
-    .type-item:nth-child(3) .dot { background: var(--coral); }
+    .type-item:nth-child(2) .dot { background: var(--meme-yellow); box-shadow: 0 0 12px rgba(255,210,63,.55); }
+    .type-item:nth-child(3) .dot { background: var(--error-red); box-shadow: 0 0 12px rgba(255,77,77,.55); }
 
     .log {
       display: grid;
@@ -388,11 +696,14 @@
       gap: 10px;
       color: var(--muted);
       font-size: 13px;
-      border-bottom: 1px solid rgba(59, 70, 82, 0.55);
+      border-bottom: 1px dashed rgba(169,180,194,.38);
       padding-bottom: 7px;
     }
 
-    .log-row strong { color: var(--text); }
+    .log-row strong {
+      color: var(--meme-yellow);
+      font-family: "DIN Alternate", "Bahnschrift", "Arial Black", monospace;
+    }
 
     .result-layer {
       position: fixed;
@@ -400,27 +711,44 @@
       display: none;
       place-items: center;
       padding: 22px;
-      background: rgba(10, 13, 16, 0.74);
+      background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0, rgba(255,255,255,.035) 1px, transparent 1px, transparent 8px),
+        rgba(10, 10, 14, 0.78);
       backdrop-filter: blur(8px);
       z-index: 5;
     }
 
-    .result-layer.show { display: grid; }
+    .result-layer.show { display: grid; animation: result-flash .36s ease; }
 
     .result-card {
       width: min(460px, 100%);
-      border: 1px solid rgba(247, 201, 92, 0.66);
+      border: 2px solid #111;
       border-radius: 8px;
-      background: var(--panel);
+      background:
+        linear-gradient(180deg, rgba(255,210,63,.15), transparent 18%),
+        var(--panel);
       box-shadow: var(--shadow);
       padding: 22px;
+      animation: receipt-drop .42s cubic-bezier(.2,.9,.2,1);
     }
 
     .result-card h2 {
       margin: 0 0 10px;
+      font-family: "Arial Black", "Microsoft YaHei", sans-serif;
       font-size: 32px;
       line-height: 1;
       letter-spacing: 0;
+      text-shadow: 3px 3px 0 #000, 5px 5px 0 var(--weird-purple);
+    }
+
+    .result-rank {
+      margin: 12px 0 4px;
+      padding: 10px 12px;
+      border: 2px dashed var(--captcha-cyan);
+      border-radius: 8px;
+      color: var(--captcha-cyan);
+      background: rgba(39,245,208,.08);
+      font-weight: 900;
     }
 
     .result-grid {
@@ -431,10 +759,10 @@
     }
 
     .result-stat {
-      border: 1px solid var(--line);
+      border: 2px solid var(--line);
       border-radius: 8px;
       padding: 10px;
-      background: #11171d;
+      background: #11121a;
     }
 
     .result-stat span {
@@ -446,8 +774,72 @@
     .result-stat strong {
       display: block;
       margin-top: 4px;
+      color: var(--meme-yellow);
+      font-family: "DIN Alternate", "Bahnschrift", "Arial Black", monospace;
       font-size: 24px;
       line-height: 1;
+    }
+
+    @keyframes scan-pass {
+      0% { transform: translateX(-110%); }
+      55%, 100% { transform: translateX(110%); }
+    }
+
+    @keyframes glitch-in {
+      0% { opacity: 0; transform: translateY(8px) skewX(8deg); filter: blur(8px); }
+      40% { opacity: 1; transform: translateY(-2px) skewX(-4deg); filter: blur(2px); }
+      100% { opacity: 1; transform: translateY(0) skewX(0); filter: blur(0); }
+    }
+
+    @keyframes tile-caught {
+      0% { transform: scale(1); }
+      45% { transform: scale(1.08) rotate(-1deg); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes wrong-flash {
+      0%, 100% { box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), inset 0 0 40px rgba(0,0,0,.38); }
+      50% { box-shadow: 0 0 0 9999px rgba(255,77,77,.16), inset 0 0 0 3px rgba(255,77,77,.7); }
+    }
+
+    @keyframes success-scan {
+      0% { box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+      50% { box-shadow: inset 0 0 0 3px rgba(39,245,208,.85), 0 0 28px rgba(39,245,208,.2); }
+      100% { box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+    }
+
+    @keyframes human-shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(5px); }
+      60% { transform: translateX(-3px); }
+      80% { transform: translateX(2px); }
+    }
+
+    @keyframes focus-jitter {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(2px); }
+    }
+
+    @keyframes pause-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    @keyframes number-bump {
+      0% { transform: scale(1); color: var(--meme-yellow); }
+      45% { transform: scale(1.18); color: var(--captcha-cyan); }
+      100% { transform: scale(1); color: var(--meme-yellow); }
+    }
+
+    @keyframes result-flash {
+      0% { filter: brightness(1.8); }
+      100% { filter: brightness(1); }
+    }
+
+    @keyframes receipt-drop {
+      0% { opacity: 0; transform: translateY(-18px) scaleY(.86); }
+      100% { opacity: 1; transform: translateY(0) scaleY(1); }
     }
 
     @media (max-width: 900px) {
@@ -455,19 +847,26 @@
       .scorebar { justify-content: stretch; }
       .metric { flex: 1 1 120px; }
       .side { grid-template-columns: 1fr 1fr; }
+      h1 { font-size: 38px; }
     }
 
     @media (max-width: 620px) {
       .app { width: min(100vw - 18px, 1120px); padding-top: 16px; }
-      .arena { min-height: 540px; }
+      .top { padding: 14px; }
+      h1 { font-size: 30px; }
+      .arena { min-height: 540px; padding-top: 48px; }
       .round-head, .answer-row { grid-template-columns: 1fr; }
       .round-head { display: grid; }
       .side { grid-template-columns: 1fr; }
       .visual-frame { min-height: 220px; }
+      .visual-frame.paused::after { font-size: 24px; }
+      .idle-panel { min-height: 130px; }
+      .idle-panel strong { font-size: 22px; }
       .choice-grid { gap: 8px; padding: 8px; }
       .choice-tile { min-height: 86px; }
       .choice-grid.street-grid .choice-tile { min-height: 82px; }
       input { font-size: 20px; }
+      .result-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -475,14 +874,14 @@
   <main class="app">
     <header class="top">
       <div>
-        <h1>验证码冲刺</h1>
-        <p class="subtitle">12 回合，扭曲文字、物品点选、街景九宫格轮番挑战。</p>
+        <h1>验证码冲刺：人类资格考试</h1>
+        <p class="subtitle">12 回合极速自证：看不清的字、点不完的车、永远差一个的红绿灯。</p>
       </div>
       <div class="scorebar" aria-live="polite">
-        <div class="metric"><span>回合</span><strong id="roundMetric">1/12</strong></div>
-        <div class="metric"><span>正确</span><strong id="correctMetric">0</strong></div>
-        <div class="metric"><span>计时</span><strong id="timeMetric">00.0</strong></div>
-        <div class="metric"><span>分数</span><strong id="scoreMetric">0</strong></div>
+        <div class="metric"><span>自证</span><strong id="roundMetric">1/12</strong></div>
+        <div class="metric"><span>活人</span><strong id="correctMetric">0</strong></div>
+        <div class="metric"><span>手速</span><strong id="timeMetric">00.0</strong></div>
+        <div class="metric"><span>人类分</span><strong id="scoreMetric">0</strong></div>
       </div>
     </header>
 
@@ -494,26 +893,32 @@
         </div>
 
         <div class="captcha-card">
-          <div id="visualFrame" class="visual-frame"></div>
-          <div class="prompt-row">
-            <div id="targetLine" class="target-line">输入画面中的字母或数字</div>
-            <div id="answerRow" class="answer-row">
-              <input id="answerInput" autocomplete="off" spellcheck="false" inputmode="text" aria-label="验证码输入框">
-              <button id="submitBtn" class="btn primary" type="button">提交</button>
+          <div id="visualFrame" class="visual-frame">
+            <div class="idle-panel">
+              <span>HUMAN DETECTING STANDBY</span>
+              <strong>请点击开始自证</strong>
+              <small>本测试不会收集你的隐私，只会收集你的崩溃。</small>
             </div>
-            <div id="feedback" class="feedback">按开始进入第一回合。</div>
           </div>
-          <button id="startBtn" class="btn teal" type="button">开始</button>
+          <div class="prompt-row">
+            <div id="targetLine" class="target-line">请输入你看见的，不是你以为的</div>
+            <div id="answerRow" class="answer-row" style="display: none;">
+              <input id="answerInput" autocomplete="off" spellcheck="false" inputmode="text" aria-label="验证码输入框" placeholder="请输入你看见的，不是你猜的">
+              <button id="submitBtn" class="btn primary" type="button">我是人类！</button>
+            </div>
+            <div id="feedback" class="feedback">请把手放在鼠标上，尊严放在一边。</div>
+          </div>
+          <button id="startBtn" class="btn teal" type="button">开始自证</button>
           <div id="runControls" class="run-controls">
-            <button id="pauseBtn" class="btn teal" type="button">暂停</button>
-            <button id="resetBtn" class="btn" type="button">重开</button>
+            <button id="pauseBtn" class="btn teal" type="button">人类缓冲中</button>
+            <button id="resetBtn" class="btn danger" type="button">重新做人</button>
           </div>
         </div>
       </section>
 
       <aside class="side">
         <div class="side-block">
-          <h2>验证码类型</h2>
+          <h2>今日折磨项目</h2>
           <div class="type-list">
             <div class="type-item"><span class="dot"></span><span>扭曲字符</span><strong id="textCount">0</strong></div>
             <div class="type-item"><span class="dot"></span><span>物品点选</span><strong id="objectCount">0</strong></div>
@@ -521,10 +926,10 @@
           </div>
         </div>
         <div class="side-block safety-note">
-          本游戏仅为娱乐化验证码模拟玩法，不涉及任何真实平台验证服务。
+          免责声明：本游戏仅为娱乐化验证码模拟玩法，不涉及任何真实平台验证服务。请勿真的拿它去撞平台。
         </div>
         <div class="side-block">
-          <h2>最近记录</h2>
+          <h2>人类操作日志</h2>
           <div id="log" class="log"></div>
         </div>
       </aside>
@@ -533,14 +938,15 @@
 
   <div id="resultLayer" class="result-layer" role="dialog" aria-modal="true">
     <div class="result-card">
-      <h2>成绩</h2>
+      <h2>人类鉴定报告</h2>
+      <div id="resultRank" class="result-rank">系统正在打印你的人类浓度...</div>
       <div class="result-grid">
-        <div class="result-stat"><span>正确率</span><strong id="resultAccuracy">0%</strong></div>
-        <div class="result-stat"><span>平均耗时</span><strong id="resultAvg">0.0s</strong></div>
-        <div class="result-stat"><span>总分</span><strong id="resultScore">0</strong></div>
-        <div class="result-stat"><span>最快</span><strong id="resultBest">0.0s</strong></div>
+        <div class="result-stat"><span>人类浓度</span><strong id="resultAccuracy">0%</strong></div>
+        <div class="result-stat"><span>手速延迟</span><strong id="resultAvg">0.0s</strong></div>
+        <div class="result-stat"><span>防脚本评分</span><strong id="resultScore">0</strong></div>
+        <div class="result-stat"><span>瞬间爆发</span><strong id="resultBest">0.0s</strong></div>
       </div>
-      <button id="restartBtn" class="btn primary" type="button">再玩一次</button>
+      <button id="restartBtn" class="btn primary" type="button">再验一次</button>
     </div>
   </div>
 
@@ -548,6 +954,66 @@
     const TOTAL_ROUNDS = 12;
     const TYPES = ['text', 'object', 'street'];
     const LABELS = { text: '扭曲字符', object: '物品点选', street: '九宫格街景' };
+    const GOOD_LINES = [
+      '通过！你暂时还是人。',
+      '不错，脚本都没你快。',
+      '活人指数上升。',
+      '验证码被你看破防了。',
+      '这波眼神可以去抢春运票。'
+    ];
+    const FAST_LINES = [
+      '太快了，系统反而怀疑你。',
+      '你这个手速需要备案。',
+      '不像人，但先算你是。'
+    ];
+    const WRONG_LINES = [
+      '系统沉默了三秒。',
+      '你刚才点的是自信。',
+      '验证码：我都不好意思说你。',
+      '错误，但很有人味。'
+    ];
+    const TYPE_HINTS = {
+      text: [
+        '请输入你看见的，不是你猜的。注意：0/O/8/B 已进入混战。',
+        '本题专治自信。'
+      ],
+      object: [
+        '春运候车室大乱斗：请选择所有「{target}」，别点成旁边的焦虑。',
+        '低清监控截图已加载：所有「{target}」都要点到。'
+      ],
+      street: [
+        '城市识别阴间题：请选择所有包含「{target}」的图片，包括半个和影子。',
+        '街景九宫格噩梦：所有「{target}」都算，系统说了算。'
+      ]
+    };
+    const OBJECT_STICKERS = {
+      train: '晚点999分',
+      ticket: '候补中',
+      idcard: '马赛克警告',
+      noodles: '老坛警告',
+      keyboard: 'Ctrl C V 抢',
+      mouse: '连点器嫌疑',
+      cup: '加班续命',
+      powerbank: '充电刺客',
+      deliveryBag: '超时3分钟',
+      badge: '临时人类',
+      luggage: '说走就走',
+      seat: '候车区VIP'
+    };
+    const STREET_STICKERS = {
+      trafficLight: '半个也算',
+      crosswalk: '差点看见',
+      bus: '低清公交',
+      taxi: '像素出租',
+      bicycle: '别点错轮',
+      motorcycle: '风控重点',
+      rider: '骑手急了',
+      roadSign: '看牌靠缘',
+      hydrant: '红色陷阱',
+      sidewalk: '地砖迷惑',
+      cone: '橙色干扰',
+      stopSign: '系统说停'
+    };
     const TEXT_CAPTCHAS = [
       '1234', '7392', 'A9K2', '7P6Q', 'A7K9P', 'X3QM8', '8O0Q', 'RNM1L',
       '0OQ8B', 'B6D9P', 'K2M7X', 'V4N8T', '5ZQ2H', 'M1L0O', 'Q8B3D',
@@ -604,6 +1070,7 @@
       objectCount: document.getElementById('objectCount'),
       streetCount: document.getElementById('streetCount'),
       resultLayer: document.getElementById('resultLayer'),
+      resultRank: document.getElementById('resultRank'),
       resultAccuracy: document.getElementById('resultAccuracy'),
       resultAvg: document.getElementById('resultAvg'),
       resultScore: document.getElementById('resultScore'),
@@ -662,14 +1129,15 @@
       state.records = [];
       state.counts = { text: 0, object: 0, street: 0 };
       state.retryType = null;
-      els.visualFrame.classList.remove('paused');
-      els.timeMetric.textContent = '0.0';
+      els.visualFrame.className = 'visual-frame';
+      els.answerInput.classList.remove('input-error');
+      els.timeMetric.textContent = '00.0';
       els.resultLayer.classList.remove('show');
       els.startBtn.style.display = 'none';
       els.runControls.classList.add('show');
-      els.pauseBtn.textContent = '暂停';
+      els.pauseBtn.textContent = '人类缓冲中';
       els.log.innerHTML = '';
-      setFeedback('第一题。', '');
+      setFeedback('HUMAN DETECTING... 第一题正在加载。', '');
       nextRound();
     }
 
@@ -701,7 +1169,7 @@
     function makeChallenge(type) {
       if (type === 'text') {
         const value = pick(TEXT_CAPTCHAS);
-        return { type, value, prompt: '输入画面中的字母或数字' };
+        return { type, value, prompt: pick(TYPE_HINTS.text) };
       }
       if (type === 'object') {
         return makeTileChallenge(type, OBJECT_ITEMS, randInt(2, 3), '请选择所有');
@@ -740,16 +1208,22 @@
       els.targetLine.innerHTML = isTileChoice
         ? `${c.type === 'street' ? '请选择所有包含' : '请选择所有'} <strong>${c.target.label}</strong>（共 ${c.targetCount} 个）`
         : c.prompt;
+      els.visualFrame.className = `visual-frame type-${c.type}`;
       els.visualFrame.innerHTML = '';
       els.answerInput.value = '';
+      els.answerInput.classList.remove('input-error');
       els.answerInput.disabled = isTileChoice;
       els.submitBtn.disabled = isTileChoice;
       els.answerRow.style.display = isTileChoice ? 'none' : 'grid';
-      setFeedback(isTileChoice ? '点选所有目标，点错会重开本回合。' : '输入后提交。', '');
+      const hint = isTileChoice
+        ? pick(TYPE_HINTS[c.type]).replace('{target}', c.target.label)
+        : c.prompt;
+      setFeedback(isTileChoice ? `${hint} 点错会重开本回合。` : hint, '');
 
       if (c.type === 'text') renderTextCaptcha(c.value);
       if (c.type === 'object') renderTileCaptcha(c.items, 'object');
       if (c.type === 'street') renderTileCaptcha(c.items, 'street', c.sceneSeed);
+      animateFrame('next-round');
     }
 
     function renderTextCaptcha(value) {
@@ -798,7 +1272,7 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const chars = [...value];
-      const fonts = ['Arial Black', 'Georgia', 'Trebuchet MS', 'Microsoft YaHei', 'KaiTi', 'SimHei'];
+      const fonts = ['Arial Black', 'Georgia', 'Trebuchet MS', 'Impact', 'Comic Sans MS', 'Courier New'];
       const baseSize = chars.length >= 8 ? 62 : chars.length >= 6 ? 76 : 104;
       const step = Math.min(140, 760 / Math.max(chars.length, 1));
       const startX = 450 - (step * (chars.length - 1)) / 2;
@@ -841,6 +1315,22 @@
       }
       ctx.stroke();
 
+      const tags = ['HUMAN?', '0/O ALERT', 'LOW JPG', 'BOT CHECK', '8B?'];
+      for (let i = 0; i < 3; i++) {
+        ctx.save();
+        ctx.translate(randInt(60, 720), randInt(32, 320));
+        ctx.rotate((randInt(-10, 10) * Math.PI) / 180);
+        ctx.fillStyle = i % 2 ? 'rgba(255,210,63,.82)' : 'rgba(39,245,208,.76)';
+        ctx.strokeStyle = 'rgba(17,17,17,.85)';
+        ctx.lineWidth = 3;
+        ctx.fillRect(0, 0, 118, 30);
+        ctx.strokeRect(0, 0, 118, 30);
+        ctx.fillStyle = '#111';
+        ctx.font = '900 15px Arial Black, sans-serif';
+        ctx.fillText(pick(tags), 59, 16);
+        ctx.restore();
+      }
+
       els.visualFrame.appendChild(canvas);
     }
 
@@ -853,6 +1343,7 @@
         btn.className = 'choice-tile';
         btn.setAttribute('aria-label', item.label);
         btn.dataset.target = item.hasTarget ? 'true' : 'false';
+        btn.dataset.sticker = tileSticker(item, mode);
         btn.innerHTML = mode === 'street'
           ? makeStreetTileSvg(item, index, sceneSeed)
           : makeObjectTileSvg(item, index);
@@ -874,6 +1365,11 @@
       return `
         <svg class="object-svg" viewBox="0 0 120 100" aria-hidden="true">
           <rect width="120" height="100" fill="${bg}"/>
+          <g opacity=".2">
+            <rect x="${seed % 40}" y="${8 + seed % 16}" width="54" height="9" fill="#ff8a3d"/>
+            <rect x="${70 - seed % 18}" y="${62 + seed % 14}" width="38" height="12" fill="#9b5cff"/>
+            <rect x="${16 + seed % 20}" y="${76 - seed % 11}" width="26" height="10" fill="#27f5d0"/>
+          </g>
           <g opacity=".38">
             <rect x="${12 + seed * 7 % 90}" y="${10 + seed * 11 % 70}" width="16" height="10" fill="#eef1ec"/>
             <rect x="${30 + seed * 13 % 70}" y="${20 + seed * 5 % 58}" width="20" height="14" fill="#aab3b1"/>
@@ -884,6 +1380,8 @@
             ${objectShape(item.key, item.color)}
           </g>
           ${crop}
+          ${objectTagSvg(item.key, seed)}
+          <path d="M0 18 H120 M0 39 H120 M0 62 H120 M0 84 H120" stroke="rgba(20,24,28,.18)" stroke-width="1"/>
           <rect width="120" height="100" fill="rgba(35,42,46,.08)"/>
           <rect x="0" y="0" width="120" height="100" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="2"/>
         </svg>`;
@@ -906,11 +1404,40 @@
       return `<g><path d="M-38 4 H28 Q38 4 38 16 V24 H-44 V14 Q-44 4 -38 4 Z" fill="${color}" ${stroke}/><path d="M-32 4 V-14 H-12 V4 M2 4 V-14 H22 V4 M-42 28 H42" ${darkStroke}/></g>`;
     }
 
+    function tileSticker(item, mode) {
+      return mode === 'street'
+        ? (STREET_STICKERS[item.key] || '低清街景')
+        : (OBJECT_STICKERS[item.key] || '候车室截图');
+    }
+
+    function objectTagSvg(key, seed) {
+      const text = OBJECT_STICKERS[key] || '人类可见';
+      const x = seed % 2 ? 8 : 62;
+      const y = seed % 3 ? 10 : 72;
+      return `
+        <g transform="translate(${x} ${y}) rotate(${seed % 2 ? -5 : 4})">
+          <rect x="0" y="0" width="48" height="13" rx="2" fill="#ffd23f" stroke="#111" stroke-width="1.5"/>
+          <text x="24" y="9" text-anchor="middle" font-size="7" font-weight="900" fill="#111">${text}</text>
+        </g>`;
+    }
+
+    function streetOccluder(vx, vy, seed) {
+      const x = vx + 10 + (seed % 42);
+      const y = vy + 18 + (seed % 54);
+      return `
+        <g opacity=".42">
+          <rect x="${x}" y="${y}" width="${24 + seed % 18}" height="${16 + seed % 13}" fill="#101015"/>
+          <rect x="${vx + 6}" y="${vy + 96}" width="108" height="9" fill="#ffd23f"/>
+        </g>`;
+    }
+
     function keyboardKeys() {
       let keys = '';
+      const labels = ['Ctrl', 'C', 'V', '抢'];
       for (let r = 0; r < 3; r++) {
         for (let c = 0; c < 6; c++) {
-          keys += `<rect x="${-33 + c * 12}" y="${-16 + r * 13}" width="8" height="8" rx="1.5" fill="#33404b" opacity=".8"/>`;
+          const label = r === 1 && c > 0 && c < 5 ? labels[c - 1] : '';
+          keys += `<rect x="${-33 + c * 12}" y="${-16 + r * 13}" width="8" height="8" rx="1.5" fill="#33404b" opacity=".8"/>${label ? `<text x="${-29 + c * 12}" y="${-10 + r * 13}" font-size="5" fill="#f8f7ef" text-anchor="middle" font-weight="900">${label}</text>` : ''}`;
         }
       }
       return keys;
@@ -928,6 +1455,11 @@
         <svg class="street-svg" viewBox="${vx} ${vy} 120 120" aria-hidden="true">
           <rect x="0" y="0" width="360" height="360" fill="#b8c7ce"/>
           <rect x="0" y="0" width="360" height="125" fill="#b7d3df"/>
+          <g opacity=".16">
+            <rect x="${seed % 120}" y="${18 + seed % 36}" width="64" height="18" fill="#ffd23f"/>
+            <rect x="${180 + seed % 88}" y="${80 + seed % 54}" width="82" height="13" fill="#27f5d0"/>
+            <rect x="${28 + seed % 180}" y="${220 + seed % 70}" width="46" height="20" fill="#ff4d4d"/>
+          </g>
           <rect x="8" y="52" width="72" height="96" fill="#9da8ad"/>
           <rect x="92" y="32" width="86" height="128" fill="#b0a596"/>
           <rect x="206" y="45" width="62" height="116" fill="#8e9ca2"/>
@@ -946,6 +1478,12 @@
           </g>
           <g transform="translate(${x} ${y}) scale(${scale})">
             ${streetShape(item.key, item.color, item.variant)}
+          </g>
+          ${streetOccluder(vx, vy, seed)}
+          <g opacity=".2">
+            <path d="M${vx} ${vy + 22} H${vx + 120} M${vx} ${vy + 48} H${vx + 120} M${vx} ${vy + 82} H${vx + 120}" stroke="#111" stroke-width="1"/>
+            <rect x="${vx + 8 + seed % 60}" y="${vy + 8 + seed % 40}" width="18" height="12" fill="#f8f7ef"/>
+            <rect x="${vx + 68 - seed % 30}" y="${vy + 62}" width="24" height="10" fill="#101015"/>
           </g>
           <rect x="${vx}" y="${vy}" width="120" height="120" fill="rgba(35,42,46,.08)"/>
           <rect x="${vx}" y="${vy}" width="120" height="120" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2"/>
@@ -1029,7 +1567,7 @@
       if (!state.active) return;
       if (state.paused) {
         state.paused = false;
-        els.pauseBtn.textContent = '暂停';
+        els.pauseBtn.textContent = '人类缓冲中';
         setControlsDisabled(false);
         if (state.awaitingNext) {
           if (state.pendingAction === 'retry') retryTileRound();
@@ -1038,7 +1576,7 @@
         }
         state.startTime = performance.now() - state.elapsed * 1000;
         startTicker();
-        setFeedback('继续挑战。', '');
+        setFeedback('继续自证。系统暂时相信你的手速还活着。', '');
         if (state.current?.type === 'text') els.answerInput.focus();
         return;
       }
@@ -1047,8 +1585,8 @@
       clearPendingTimer();
       stopTicker();
       setControlsDisabled(true);
-      els.pauseBtn.textContent = '继续';
-      setFeedback(state.awaitingNext ? '已暂停。点击继续进入下一题。' : '已暂停。点击继续恢复本题。', '');
+      els.pauseBtn.textContent = '继续自证';
+      setFeedback(state.awaitingNext ? '人类缓冲中。继续后进入下一题。' : '人类缓冲中。系统正在等待你的灵魂追上手速。', '');
     }
 
     function setControlsDisabled(disabled) {
@@ -1083,7 +1621,8 @@
       if (c.selectedIndexes.has(index)) return;
 
       if (item.key !== c.value) {
-        finishAttempt(c, false, `点错了，本回合重开。目标是 ${c.target.label}`);
+        button.classList.add('wrong');
+        finishAttempt(c, false, `${pick(WRONG_LINES)} 你点的这个东西和「${c.target.label}」毫无关系，本回合重开。`);
         scheduleTileRetry(760);
         return;
       }
@@ -1098,7 +1637,7 @@
         return;
       }
 
-      setFeedback(`已选 ${c.selectedIndexes.size}/${c.targetCount} 个，继续点击 ${c.target.label}。`, 'good');
+      setFeedback(`抓到了！已选 ${c.selectedIndexes.size}/${c.targetCount} 个，继续点击 ${c.target.label}。`, 'good');
     }
 
     function finishAttempt(c, ok, failText) {
@@ -1112,13 +1651,20 @@
       if (ok) {
         state.correct += 1;
         state.score += gained;
-        setFeedback(`正确 +${gained}`, 'good');
+        animateFrame('success');
+        setFeedback(`${time < 2 ? pick(FAST_LINES) : pick(GOOD_LINES)} 防脚本评分 +${gained}`, 'good');
       } else {
-        setFeedback(failText || `错误，答案是 ${displayAnswer(c)}`, 'bad');
+        animateFrame('wrong');
+        if (c.type === 'text') flashInputError();
+        setFeedback(failText || `${pick(WRONG_LINES)} 正解是 ${displayAnswer(c)}`, 'bad');
       }
 
       state.records.unshift({ type: c.type, ok, time, answer: displayAnswer(c) });
       updateMetrics();
+      if (ok) {
+        bumpElement(els.scoreMetric);
+        bumpElement(els.correctMetric);
+      }
       renderLog();
     }
 
@@ -1127,7 +1673,33 @@
       return c.value;
     }
 
+    function animateFrame(className) {
+      els.visualFrame.classList.remove(className);
+      void els.visualFrame.offsetWidth;
+      els.visualFrame.classList.add(className);
+      window.setTimeout(() => {
+        if (!els.visualFrame.classList.contains('paused')) {
+          els.visualFrame.classList.remove(className);
+        }
+      }, 420);
+    }
+
+    function flashInputError() {
+      els.answerInput.classList.remove('input-error');
+      void els.answerInput.offsetWidth;
+      els.answerInput.classList.add('input-error');
+    }
+
+    function bumpElement(element) {
+      element.classList.remove('bump');
+      void element.offsetWidth;
+      element.classList.add('bump');
+      window.setTimeout(() => element.classList.remove('bump'), 300);
+    }
+
     function setFeedback(text, tone) {
+      els.feedback.className = 'feedback';
+      void els.feedback.offsetWidth;
       els.feedback.textContent = text;
       els.feedback.className = `feedback ${tone}`.trim();
     }
@@ -1148,9 +1720,17 @@
       state.records.slice(0, 5).forEach((record) => {
         const row = document.createElement('div');
         row.className = 'log-row';
-        row.innerHTML = `<span>${LABELS[record.type]} · ${record.ok ? '正确' : '错误'}</span><strong>${record.time.toFixed(1)}s</strong>`;
+        row.innerHTML = `<span>${LABELS[record.type]} · ${record.ok ? '通过' : '翻车'} · ${record.answer}</span><strong>${record.time.toFixed(1)}s</strong>`;
         els.log.appendChild(row);
       });
+    }
+
+    function rankResult(accuracy, avg) {
+      if (accuracy >= 90 && avg < 2) return 'S 级：疑似脚本型人类，但很努力装人。';
+      if (accuracy >= 70) return 'A 级：验证码公务员，正常人类，略带怨气。';
+      if (accuracy >= 50) return 'B 级：正常互联网受害者，建议喝口水再来。';
+      if (accuracy >= 30) return 'C 级：刚睡醒的打工人，手速仍在启动。';
+      return 'D 级：建议从识别红绿灯开始复健。';
     }
 
     function finishGame() {
@@ -1167,6 +1747,7 @@
       const correctRecords = state.records.filter(r => r.ok);
       const best = correctRecords.length ? Math.min(...correctRecords.map(r => r.time)) : 0;
       updateMetrics();
+      els.resultRank.textContent = rankResult(accuracy, avg);
       els.resultAccuracy.textContent = `${accuracy}%`;
       els.resultAvg.textContent = `${avg.toFixed(1)}s`;
       els.resultScore.textContent = String(state.score);
@@ -1174,7 +1755,7 @@
       els.resultLayer.classList.add('show');
       els.runControls.classList.remove('show');
       els.startBtn.style.display = 'inline-block';
-      els.startBtn.textContent = '再开一局';
+      els.startBtn.textContent = '再验一次';
     }
 
     els.startBtn.addEventListener('click', startGame);
